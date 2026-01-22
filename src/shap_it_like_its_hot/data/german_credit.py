@@ -9,9 +9,7 @@ import urllib.request
 
 import pandas as pd
 
-GERMAN_CREDIT_URL = (
-    "https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data"
-)
+GERMAN_CREDIT_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data"
 
 GERMAN_CREDIT_COLUMNS = [
     "checking_status",
