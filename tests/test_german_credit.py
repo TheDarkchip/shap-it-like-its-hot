@@ -96,9 +96,9 @@ def test_iter_german_credit_columns_all() -> None:
 def test_iter_german_credit_columns_numeric_only() -> None:
     """Test iter_german_credit_columns returns only numeric columns when numeric_only=True."""
     columns = list(iter_german_credit_columns(numeric_only=True))
-    
+
     # Should return only numeric columns
     assert set(columns) == NUMERIC_COLUMNS
-    
+
     # Should be sorted alphabetically
     assert columns == sorted(columns)
