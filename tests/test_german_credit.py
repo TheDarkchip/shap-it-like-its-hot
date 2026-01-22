@@ -8,6 +8,7 @@ import pytest
 from shap_it_like_its_hot.data.german_credit import (
     GERMAN_CREDIT_COLUMNS,
     download_german_credit,
+    iter_german_credit_columns,
     load_german_credit,
 )
 
@@ -84,3 +85,20 @@ def test_target_positive_validation(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError):
         load_german_credit(data_path, target_positive="unknown")
+
+
+def test_iter_german_credit_columns_all() -> None:
+    """Test iter_german_credit_columns returns all columns in order."""
+    columns = list(iter_german_credit_columns(numeric_only=False))
+    assert columns == GERMAN_CREDIT_COLUMNS
+
+
+def test_iter_german_credit_columns_numeric_only() -> None:
+    """Test iter_german_credit_columns returns only numeric columns when numeric_only=True."""
+    columns = list(iter_german_credit_columns(numeric_only=True))
+    
+    # Should return only numeric columns
+    assert set(columns) == NUMERIC_COLUMNS
+    
+    # Should be sorted alphabetically
+    assert columns == sorted(columns)
