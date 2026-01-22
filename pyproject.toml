@@ -6,3 +6,9 @@ dependencies = [
     "pandas>=3.0.0",
     "pytest>=9.0.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.14.13",
+]
