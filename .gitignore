@@ -49,9 +49,6 @@ htmlcov/
 .idea/
 .vscode/
 
-# bd (beads) local state
-.beads/
-
 # Misc
 *.log
 *.tmp
