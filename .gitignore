@@ -32,13 +32,13 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
-# Data, outputs, and models
-data/
-datasets/
-outputs/
-results/
-logs/
-models/
+# Data, outputs, and models (repo root only)
+/data/
+/datasets/
+/outputs/
+/results/
+/logs/
+/models/
 
 # Environment files
 .env

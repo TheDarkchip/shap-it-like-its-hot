@@ -3,5 +3,6 @@ name = "shap-it-like-its-hot"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "pandas>=3.0.0",
     "pytest>=9.0.2",
 ]
