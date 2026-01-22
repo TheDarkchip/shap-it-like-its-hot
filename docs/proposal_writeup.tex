@@ -1,0 +1,239 @@
+% This is a variation of the NeurIPS'24 format
+\documentclass{article}
+\usepackage[final]{adrl}
+
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\title{Big SHAP Energy: Stability and Reliability of Global SHAP Explanations for Credit Scoring}
+\author{Shilin Elizabeth Josline \quad Robin Gieseke \\
+\url{https://github.com/TheDarkchip/shap-it-like-its-hot}}
+
+\begin{document}
+\maketitle
+
+\section{Motivation}
+
+Credit scoring is a high-stakes application where explanations are essential for trust, regulation, and debugging. SHAP (SHapley Additive exPlanations) is widely used to interpret complex models by attributing contributions of features to predictions \cite{lundberg2017,shapley1953}. In parallel, Permutation Feature Importance (PFI) is a simple and popular, model-agnostic baseline that measures the performance drop after permuting a feature \cite{breiman2001,sklearn_pfi}.
+
+In practice, global feature-importance plots are often reported as a single ranking, even though they may be sensitive to two properties common in credit data: (i) \emph{class imbalance} and (ii) \emph{correlated or dependent features}. For PFI, correlated predictors can bias importances because unconditional permutations may create unrealistic feature combinations; conditional permutation schemes have been proposed to mitigate this issue \cite{strobl2008,hooker2019}. For Shapley-based explanations, commonly used assumptions can also lead to misleading attributions when features are dependent, motivating methods that explicitly account for dependence \cite{aas2021}.
+
+We propose a reproducible, statistically careful case study on the Statlog German Credit dataset \cite{uci_german_credit} to answer a practical question: \emph{when can we trust global SHAP feature importances as a stable summary, and how do they compare to PFI under imbalance and correlation?} The intended output is actionable guidance for reporting global importances in small tabular credit datasets (e.g., ``report uncertainty across resamples/folds'' and ``be cautious under strong feature dependence'').
+
+
+
+\paragraph{Scope and focus.}
+To keep the project focused, we prioritize (i) the stability of global feature importances under controlled class imbalance
+and (ii) the agreement between SHAP and permutation feature importance (PFI).
+The correlated-feature duplication study is treated as a focused ablation under a representative setting.
+Unless otherwise stated, results are reported for the tree-based model, with the linear model used as a robustness check.
+
+
+\section{Related Work}
+
+Permutation-based explanations and global feature-importance measures are known to behave poorly when predictors are dependent. In particular, unconditional permutation can create unrealistic feature combinations, which may distort the estimated importance of correlated features \cite{strobl2008,hooker2019}. For Shapley-based explanations, common approximation schemes can also be misleading under feature dependence, motivating methods that explicitly account for dependence \cite{aas2021}.
+
+Most closely to our setting, Chen et al.~\cite{chen2024} study how explanation stability (including SHAP) degrades as class imbalance increases in credit-scoring datasets. Lin and Wang~\cite{lin2025} analyze SHAP stability in a credit-risk case study and report that top-ranked features tend to be more consistent than mid-importance features. We complement these results with a compact benchmark on the Statlog German Credit dataset, using a leakage-safe resampling protocol that resamples training folds only, directly comparing SHAP to permutation importance with both rank- and magnitude-based agreement metrics, and adding a minimal correlated-feature (duplicate) stress test.
+
+Finally, agreement between feature-importance methods has been studied in other application areas; for example, Rajbahadur et al.~\cite{rajbahadur2022} compare multiple feature-importance techniques and quantify rank agreement. We adopt similar rank-based metrics and additionally report a magnitude-aware comparison using normalized importance vectors, since rank correlation can be unstable when importances are nearly flat.
+
+\section{Research Questions}
+
+\begin{enumerate}
+    \item \textbf{Stability under class imbalance.}
+    How stable are global SHAP feature importances when the \emph{effective training class ratio} is varied (10\%, 30\%, 50\% positives) and performance/explanations are evaluated on held-out folds?
+
+    \item \textbf{Effect of correlated features (ablation).}
+    How do SHAP and PFI behave when features are nearly duplicates (original features vs. noisy copies)? Do they split importance, concentrate it on one feature, or change the combined importance?
+
+    \item \textbf{Agreement between SHAP and PFI.}
+    How strongly do SHAP and PFI agree on global feature rankings (Spearman correlation, top-$k$ overlap), and how does this agreement change with class imbalance?
+\end{enumerate}
+
+\section{Methodology}
+
+\subsection{Data and preprocessing}
+
+We use the numeric Statlog German Credit dataset (1000 samples, 20 attributes, binary target) \cite{uci_german_credit} and relabel the target such that \emph{bad} credit risk is the positive class.
+
+\textbf{Key design choice:} We perform the train/test split \emph{before} any resampling. Specifically, in each cross-validation split we only resample the \emph{training fold} to reach the desired class ratio, while the test fold remains untouched. This prevents duplicated/oversampled points from appearing in both train and test.
+
+To vary imbalance without confounding sample size, we keep the training-fold size fixed and draw a sample with the target class ratio and the same size as the original training fold (under-sampling without replacement when reducing a class, over-sampling with replacement when increasing it).
+
+All preprocessing steps are implemented in a single pipeline. Standardization for the linear model is fit on the training fold only and applied to the corresponding test fold.
+
+\subsection{Models}
+
+We study two model families to cover a strong nonlinear learner and a linear baseline:
+\begin{itemize}
+    \item \textbf{Tree model:} XGBoost gradient-boosted trees (binary logistic objective), explained via TreeSHAP \cite{lundberg2018_tree}.
+    \item \textbf{Linear model:} XGBoost with \texttt{gblinear} booster (logistic regression with L2 regularization), explained via linear SHAP \cite{lundberg2017}.
+\end{itemize}
+
+\subsection{Hyperparameter optimization}
+
+To avoid optimistic bias, hyperparameter selection is performed \emph{within} each training fold only.
+We use a small-budget hyperparameter optimization procedure. By default, this is random search; if computationally feasible, we employ SMAC's Random Facade with Sobol sampling for improved space coverage (e.g., 8--12 configurations) with 3-fold \emph{inner} stratified CV on the resampled training data and ROC AUC as the score. The selected configuration is then retrained on the full resampled training fold and evaluated on the held-out test fold.
+
+\subsection{Cross-validated evaluation protocol}
+
+For each model and target class ratio, we perform \textbf{repeated stratified 5-fold CV} with 5 repeats, yielding 25 outer test folds in total, to obtain more reliable uncertainty estimates than a single 5-fold run.
+
+For each outer fold, we:
+\begin{itemize}
+    \item split into training and test folds (stratified);
+    \item resample \emph{only} the training fold to the target class ratio;
+    \item select hyperparameters via inner CV on the resampled training fold; if tuning is disabled, we use a fixed configuration;
+    \item train the final model on the resampled training fold;
+    \item evaluate predictive performance on the untouched test fold using ROC AUC and PR AUC; we also report accuracy as a secondary metric;
+    \item compute PFI on the test fold using permutation importance with ROC AUC scoring, using multiple permutation repeats to reduce Monte Carlo noise \cite{breiman2001,sklearn_pfi};
+    \item compute SHAP values on the test fold using TreeSHAP/linear SHAP and summarize them as global importances via mean absolute SHAP value per feature \cite{lundberg2018_tree,lundberg2017};
+    \item compute SHAP--PFI agreement via Spearman rank correlation and top-$k$ overlap on the resulting rankings.
+\end{itemize}
+
+\subsection{Stability metrics and correlated-feature ablation}
+
+\textbf{Global importance vectors.} For each outer fold we obtain a SHAP importance vector $s \in \mathbb{R}^d$ and a PFI importance vector $p \in \mathbb{R}^d$.
+To make stability comparable across folds and reduce scale effects, we also report \emph{normalized} importances $\tilde{s}=s/\sum_j s_j$ and $\tilde{p}=p/\sum_j p_j$.
+
+\textbf{Stability within method.} We quantify stability in two complementary ways:
+(i) \emph{magnitude stability}: average per-feature variance of normalized importances across outer folds (lower is more stable), and
+(ii) \emph{rank stability}: average pairwise Spearman correlation (or Kendall-$\tau$) between feature-rankings across outer folds.
+Reporting both prevents ``stable ranks but unstable magnitudes'' (and vice versa) from being missed.
+
+\textbf{Correlated-feature ablation.} We duplicate a small set of features (e.g., 3--5) by creating noisy copies $f'_j=f_j+\epsilon$ with small Gaussian noise, yielding near-perfect correlation.
+We rerun the same evaluation protocol and measure:
+(i) importance split between $f_j$ and $f'_j$ (e.g., $|I(f_j)-I(f'_j)|$ and the ratio $I(f_j)/(I(f_j)+I(f'_j))$), and
+(ii) change in \emph{combined} importance $I(f_j)+I(f'_j)$ compared to the baseline without duplicates.
+This isolates known dependence issues for PFI and Shapley-style explanations \cite{strobl2008,hooker2019,aas2021} without adding new methods.
+
+\section{Evaluation Strategy}
+
+We will report (per model and class ratio) mean and uncertainty across repeated CV:
+\begin{itemize}
+    \item \textbf{Predictive performance:} ROC AUC and PR AUC (mean $\pm$ std across outer folds), and accuracy as a secondary metric.
+    \item \textbf{Agreement (SHAP vs. PFI):} Spearman rank correlation, top-$k$ overlap, and a magnitude-aware similarity (cosine similarity between normalized importance vectors) (mean $\pm$ std).
+    \item \textbf{Stability (within SHAP / within PFI):} magnitude stability (variance of normalized importances) and rank stability (average pairwise rank correlation).
+    \item \textbf{Correlated-feature behaviour:} split and combined-importance metrics for original/duplicate feature pairs.
+\end{itemize}
+
+\section{Hypotheses and Statistical Analysis}
+
+We will primarily emphasize effect sizes and confidence intervals, using hypothesis tests as a secondary check.
+Our main hypotheses are:
+\begin{itemize}
+    \item \textbf{H0\_A (imbalance does not affect SHAP--PFI agreement):}
+    The mean Spearman correlation between SHAP and PFI rankings is the same across class ratios (per model).
+    \item \textbf{H0\_B (equal stability):}
+    SHAP and PFI have the same stability (magnitude and rank stability) under a given model and class ratio.
+    \item \textbf{H0\_C (no difference under correlated features):}
+    Under duplicated features, the degree of importance splitting is the same for SHAP and PFI.
+\end{itemize}
+
+For comparisons, we will compute paired differences on outer-fold results (and also on per-repeat averages as a robustness check). We will use nonparametric bootstrap confidence intervals for key metrics and Wilcoxon signed-rank tests (or paired $t$-tests if justified) on paired differences. Multiple comparisons across ratios and methods will be handled with Holm or Benjamini--Hochberg correction.
+
+\section{Timeline}
+
+We estimate the project to require approximately one to two weeks of focused work.
+A tentative timeline is:
+\begin{itemize}
+    \item \textbf{Research (1--2 days):} Review literature on SHAP, PFI, and dependence/imbalance pitfalls; finalize the exact stability metrics and the duplicate-feature setup.
+    \item \textbf{Implementation (2--3 days):} Build a single end-to-end pipeline (splits \textrightarrow\ resampling \textrightarrow\ training \textrightarrow\ explanations \textrightarrow\ metrics) with fixed seeds and logging.
+    \item \textbf{Experiments (2--3 days):} Run repeated CV for all (model $\times$ ratio) settings; run the duplicate-feature ablation.
+    \item \textbf{Analysis (1--2 days):} Aggregate results, compute uncertainty/effect sizes, and create publication-quality plots.
+    \item \textbf{Reporting (1--2 days):} Final report and poster, including a brief reproducibility checklist and links to code/artifacts.
+\end{itemize}
+
+\paragraph{Estimated Computational Load}\
+
+The dataset has only 1000 samples, and the two XGBoost models are lightweight. Repeated 5-fold CV and a small inner random search remain feasible on CPU hardware. The most expensive components are SHAP and permutation importance, but both are computed on small test folds only.
+
+\section{Expected Contribution}
+
+This project will provide a careful empirical assessment of (i) how stable global SHAP importances are under varying training imbalance, (ii) how SHAP and PFI behave under extreme feature dependence (duplicates), and (iii) when both methods agree or disagree on global rankings.
+Beyond reporting numbers, we aim to distill practical recommendations for credit-scoring style tabular data: how much uncertainty to expect across folds/repeats, how to report global importances responsibly (including stability), and which failure modes to watch for under correlated predictors.
+
+\begin{thebibliography}{99}
+
+\bibitem[Shapley(1953)]{shapley1953}
+Lloyd Shapley.
+\newblock A value for n-person games.
+\newblock In \emph{Contributions to the Theory of Games II}. Princeton University Press, 1953.
+
+\bibitem[Lundberg and Lee(2017)]{lundberg2017}
+Scott~M. Lundberg and Su-In Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2017.
+\newblock arXiv:1705.07874.
+
+\bibitem[Lundberg et~al.(2018)]{lundberg2018_tree}
+Scott~M. Lundberg, Gabriel~G. Erion, and Su-In Lee.
+\newblock Consistent individualized feature attribution for tree ensembles.
+\newblock arXiv:1802.03888, 2018.
+
+\bibitem[Breiman(2001)]{breiman2001}
+Leo Breiman.
+\newblock Random forests.
+\newblock \emph{Machine Learning}, 45(1):5--32, 2001.
+
+\bibitem[Strobl et~al.(2008)]{strobl2008}
+Carolyn Strobl, Anne-Laure Boulesteix, Achim Zeileis, and Torsten Hothorn.
+\newblock Conditional variable importance for random forests.
+\newblock \emph{BMC Bioinformatics}, 9:307, 2008.
+
+\bibitem[Hooker et~al.(2019)]{hooker2019}
+Giles Hooker, Lucas Mentch, and Siyu Zhou.
+\newblock Unrestricted permutation forces extrapolation: Variable importance requires at least one more model, or there is no free variable importance.
+\newblock arXiv:1905.03151, 2019.
+
+\bibitem[Aas et~al.(2021)]{aas2021}
+Kjersti Aas, Martin Jullum, and Anders L{\o}land.
+\newblock Explaining individual predictions when features are dependent: More accurate approximations to Shapley values.
+\newblock \emph{Artificial Intelligence}, 298:103502, 2021.
+\bibitem[Chen et~al.(2024)]{chen2024}
+Yujia Chen, Raffaella Calabrese, and Bel{\'e}n Martin-Barrag{\'a}n.
+\newblock Interpretable machine learning for imbalanced credit scoring datasets.
+\newblock \emph{European Journal of Operational Research}, 312(1):357--372, 2024.
+\newblock DOI: 10.1016/j.ejor.2023.06.036.
+
+\bibitem[Lin and Wang(2025)]{lin2025}
+Luyun Lin and Yiqing Wang.
+\newblock SHAP Stability in Credit Risk Management: A Case Study in Credit Card Default Model.
+\newblock \emph{Risks}, 13(12):238, 2025.
+\newblock DOI: 10.3390/risks13120238.
+
+\bibitem[Rajbahadur et~al.(2022)]{rajbahadur2022}
+Gopi~Krishnan Rajbahadur, Shaowei Wang, Gustavo~A. Oliva, Yasutaka Kamei, and Ahmed~E. Hassan.
+\newblock The Impact of Feature Importance Methods on the Interpretation of Defect Classifiers.
+\newblock \emph{IEEE Transactions on Software Engineering}, 48(7):2245--2261, 2022.
+\newblock DOI: 10.1109/TSE.2021.3056941.
+
+
+\bibitem[Hofmann(1994)]{uci_german_credit}
+Hofmann, H.
+\newblock Statlog (German Credit Data).
+\newblock UCI Machine Learning Repository, 1994.
+\newblock DOI: 10.24432/C5NC77.
+\newblock Available at: \url{https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data}. Accessed 2026-01-06.
+
+\bibitem[scikit-learn documentation(2026)]{sklearn_pfi}
+scikit-learn developers.
+\newblock Permutation feature importance (online documentation).
+\newblock Available at: \url{https://scikit-learn.org/stable/modules/permutation_importance.html}. Accessed 2026-01-06.
+
+\end{thebibliography}
+
+\section{Transparency and Use of AI Tools}
+
+Large language models (LLMs) were used as supportive tools during the preparation of this project.
+Specifically, LLMs were employed to assist with scoping the research questions, suggesting experimental
+and ablation designs, and providing feedback on clarity, style, and grammar of the written proposal.
+All methodological decisions, experimental designs, and interpretations were reviewed and finalized
+by the authors. No results, data, or conclusions were generated automatically by LLMs.
+
+\end{document}
