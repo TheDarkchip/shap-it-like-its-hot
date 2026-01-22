@@ -49,6 +49,9 @@ htmlcov/
 .idea/
 .vscode/
 
+# Beads local cache
+.beads/export-state/
+
 # Misc
 *.log
 *.tmp
