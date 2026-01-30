@@ -11,3 +11,34 @@ Experiments are based on cross-validated evaluations using the German Credit dat
 
 **Status:** Work in progress.  
 At the time of writing, no finalized experiments or results are included. Code and documentation will be added as the project is implemented.
+
+## Setup
+
+This project uses `uv` for dependency management.
+
+### Prerequisites
+
+- Python >= 3.13
+- `uv` installed
+
+### Install dependencies
+
+```bash
+uv sync
+```
+
+### Common commands
+
+```bash
+# Run tests
+uv run pytest
+
+# Lint and format
+uv run ruff check
+uv run ruff format
+```
+
+### Data cache
+
+The German Credit dataset is downloaded on demand and cached at `./data/raw/` by default.
+Set `SHAP_IT_DATA_DIR` to override the cache directory.
