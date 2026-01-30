@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import resample
 
 
 @dataclass(frozen=True)
@@ -54,10 +54,8 @@ def resample_train_fold(
 
     n_total = len(y_series)
     n_pos = int(round(n_total * target_positive_ratio))
-    n_pos = max(0, min(n_total, n_pos))
+    n_pos = max(1, min(n_total - 1, n_pos))
     n_neg = n_total - n_pos
-
-    rng = np.random.default_rng(random_state)
 
     pos_idx = y_series.index[y_series == 1].to_numpy()
     neg_idx = y_series.index[y_series == 0].to_numpy()
@@ -65,9 +63,20 @@ def resample_train_fold(
     if len(pos_idx) == 0 or len(neg_idx) == 0:
         raise ValueError("Both classes must be present to resample")
 
-    pos_sample = rng.choice(pos_idx, size=n_pos, replace=n_pos > len(pos_idx))
-    neg_sample = rng.choice(neg_idx, size=n_neg, replace=n_neg > len(neg_idx))
+    pos_sample = resample(
+        pos_idx,
+        replace=n_pos > len(pos_idx),
+        n_samples=n_pos,
+        random_state=random_state,
+    )
+    neg_sample = resample(
+        neg_idx,
+        replace=n_neg > len(neg_idx),
+        n_samples=n_neg,
+        random_state=None if random_state is None else random_state + 1,
+    )
 
+    rng = np.random.default_rng(random_state)
     combined = np.concatenate([pos_sample, neg_sample])
     rng.shuffle(combined)
 

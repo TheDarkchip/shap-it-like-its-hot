@@ -41,6 +41,15 @@ def test_resample_is_reproducible() -> None:
     pd.testing.assert_series_equal(first.y, second.y)
 
 
+def test_resample_keeps_both_classes_for_small_ratio() -> None:
+    X, y = _toy_data(1, 9)
+    result = resample_train_fold(X, y, target_positive_ratio=0.01, random_state=7)
+
+    assert result.positive_count == 1
+    assert result.negative_count == 9
+    assert result.y.sum() == 1
+
+
 def test_invalid_ratio_raises() -> None:
     X, y = _toy_data(2, 8)
     with pytest.raises(ValueError):
