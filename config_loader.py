@@ -34,6 +34,12 @@ def validate_config(cfg: dict[str, Any]) -> None:
     if missing:
         raise ConfigError(f"Missing required sections: {', '.join(missing)}")
 
+    if not isinstance(cfg["resampling"], dict):
+        raise ConfigError("resampling must be a mapping")
+
+    if not isinstance(cfg["metrics"], dict):
+        raise ConfigError("metrics must be a mapping")
+
     if not isinstance(cfg["resampling"].get("target_positive_ratios"), list):
         raise ConfigError("resampling.target_positive_ratios must be a list")
 

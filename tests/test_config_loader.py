@@ -41,3 +41,26 @@ metrics:
 
     cfg = load_config(cfg_path)
     validate_config(cfg)
+
+def test_validate_config_resampling_not_mapping() -> None:
+    cfg = {
+        "experiment": {},
+        "cv": {},
+        "resampling": [],
+        "model": {},
+        "metrics": {"primary": "roc_auc"},
+    }
+    with pytest.raises(ConfigError, match="resampling must be a mapping"):
+        validate_config(cfg)
+
+
+def test_validate_config_metrics_not_mapping() -> None:
+    cfg = {
+        "experiment": {},
+        "cv": {},
+        "resampling": {"target_positive_ratios": [0.3]},
+        "model": {},
+        "metrics": [],
+    }
+    with pytest.raises(ConfigError, match="metrics must be a mapping"):
+        validate_config(cfg)
