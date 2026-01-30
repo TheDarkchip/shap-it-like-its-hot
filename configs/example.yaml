@@ -1,0 +1,23 @@
+# Example single-run configuration
+
+experiment:
+  name: example
+  random_seed: 123
+
+cv:
+  outer_folds: 3
+  outer_repeats: 1
+  inner_folds: 2
+
+resampling:
+  target_positive_ratios: [0.3]
+
+model:
+  name: xgboost
+  params:
+    max_depth: 3
+    n_estimators: 50
+    learning_rate: 0.2
+
+metrics:
+  primary: roc_auc

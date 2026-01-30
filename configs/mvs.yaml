@@ -1,0 +1,23 @@
+# Minimum viable study configuration
+
+experiment:
+  name: mvs
+  random_seed: 42
+
+cv:
+  outer_folds: 5
+  outer_repeats: 3
+  inner_folds: 3
+
+resampling:
+  target_positive_ratios: [0.1, 0.3, 0.5]
+
+model:
+  name: xgboost
+  params:
+    max_depth: 4
+    n_estimators: 200
+    learning_rate: 0.1
+
+metrics:
+  primary: roc_auc
