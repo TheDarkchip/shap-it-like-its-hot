@@ -46,6 +46,13 @@ def validate_config(cfg: dict[str, Any]) -> None:
     if "primary" not in cfg["metrics"]:
         raise ConfigError("metrics.primary is required")
 
+    from metrics_utils import MetricsConfigError, parse_metrics_config
+
+    try:
+        parse_metrics_config(cfg["metrics"])
+    except MetricsConfigError as exc:
+        raise ConfigError(str(exc)) from exc
+
 
 if __name__ == "__main__":
     import sys
