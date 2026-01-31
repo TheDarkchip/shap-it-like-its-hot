@@ -21,3 +21,6 @@ model:
 
 metrics:
   primary: roc_auc
+  additional:
+    - pr_auc
+    - log_loss
