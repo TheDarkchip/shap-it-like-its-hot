@@ -88,6 +88,7 @@ def configure_logging(
 
     if force:
         for handler in list(logger.handlers):
+            handler.close()
             logger.removeHandler(handler)
 
     if logger.handlers:
