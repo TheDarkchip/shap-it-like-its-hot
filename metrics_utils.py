@@ -83,8 +83,15 @@ def score_metrics(
     y_true: np.ndarray,
     y_score: np.ndarray,
 ) -> dict[str, float]:
+    unique_labels = np.unique(y_true)
     scores: dict[str, float] = {}
     for name in cfg.all_metrics():
         metric = SUPPORTED_METRICS[name]
+        if name in {"roc_auc", "pr_auc"} and unique_labels.size < 2:
+            scores[name] = float("nan")
+            continue
+        if name == "log_loss" and unique_labels.size < 2:
+            scores[name] = float(log_loss(y_true, y_score, labels=[0, 1]))
+            continue
         scores[name] = metric.scorer(y_true, y_score)
     return scores

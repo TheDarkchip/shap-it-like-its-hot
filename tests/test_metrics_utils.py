@@ -28,3 +28,15 @@ def test_score_metrics_returns_values() -> None:
     assert set(scores.keys()) == {"roc_auc", "log_loss"}
     assert scores["roc_auc"] > 0.9
     assert scores["log_loss"] > 0.0
+
+
+def test_score_metrics_handles_single_class() -> None:
+    y_true = np.array([1, 1, 1, 1])
+    y_score = np.array([0.9, 0.8, 0.7, 0.6])
+    cfg = parse_metrics_config({"primary": "roc_auc", "additional": ["pr_auc", "log_loss"]})
+
+    scores = score_metrics(cfg, y_true, y_score)
+
+    assert np.isnan(scores["roc_auc"])
+    assert np.isnan(scores["pr_auc"])
+    assert scores["log_loss"] > 0.0
