@@ -39,6 +39,24 @@ def test_compute_pfi_importance_prefers_signal() -> None:
     assert importances["signal"] > importances["noise"]
 
 
+def test_compute_pfi_importance_supports_log_loss() -> None:
+    X, y = _toy_data()
+    model = LogisticRegression(max_iter=200)
+    model.fit(X, y)
+
+    importances = compute_pfi_importance(
+        model,
+        X,
+        y,
+        metric_name="log_loss",
+        n_repeats=3,
+        random_state=0,
+    )
+
+    assert set(importances.index) == {"signal", "noise"}
+    assert importances.notna().all()
+
+
 def test_compute_pfi_importance_handles_single_class() -> None:
     X = pd.DataFrame({"a": [0.1, 0.2, 0.3], "b": [0.4, 0.5, 0.6]})
     y = pd.Series([1, 1, 1])

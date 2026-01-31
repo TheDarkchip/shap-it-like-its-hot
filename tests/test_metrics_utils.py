@@ -21,12 +21,15 @@ def test_parse_metrics_config_rejects_unknown() -> None:
 def test_score_metrics_returns_values() -> None:
     y_true = np.array([0, 0, 1, 1])
     y_score = np.array([0.1, 0.2, 0.8, 0.9])
-    cfg = parse_metrics_config({"primary": "roc_auc", "additional": ["log_loss"]})
+    cfg = parse_metrics_config(
+        {"primary": "roc_auc", "additional": ["pr_auc", "log_loss"]}
+    )
 
     scores = score_metrics(cfg, y_true, y_score)
 
-    assert set(scores.keys()) == {"roc_auc", "log_loss"}
+    assert set(scores.keys()) == {"roc_auc", "pr_auc", "log_loss"}
     assert scores["roc_auc"] > 0.9
+    assert scores["pr_auc"] > 0.9
     assert scores["log_loss"] > 0.0
 
 
