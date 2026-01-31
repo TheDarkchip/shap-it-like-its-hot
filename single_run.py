@@ -20,6 +20,8 @@ from experiment_utils import (
     set_global_seed,
 )
 from german_credit import load_german_credit
+from metrics_utils import parse_metrics_config
+from pfi_utils import compute_pfi_importance
 from resampling import resample_train_fold
 from results_io import ResultRecord, append_record_csv
 from shap_utils import compute_tree_shap
@@ -117,6 +119,7 @@ def run_single_experiment(
     model_cfg = cfg.get("model", {})
     model_name = model_cfg.get("name", "xgboost")
     model_params = model_cfg.get("params", {})
+    metrics_cfg = parse_metrics_config(cfg["metrics"])
 
     if model_name != "xgboost":
         raise ValueError("Only model.name='xgboost' is supported for now")
@@ -163,6 +166,14 @@ def run_single_experiment(
             proba = predict_proba(train_result.model, X_test)
             metrics = _compute_metrics(y_test, proba)
             shap_result = compute_tree_shap(train_result.model, X_test)
+            pfi_importance = compute_pfi_importance(
+                train_result.model,
+                X_test,
+                y_test,
+                metric_name=metrics_cfg.primary,
+                n_repeats=int(cfg["metrics"].get("pfi_repeats", 5)),
+                random_state=repeat_seed,
+            )
 
             record = ResultRecord(
                 fold_id=fold_id,
@@ -172,7 +183,7 @@ def run_single_experiment(
                 class_ratio=achieved_ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
-                pfi_importance={},
+                pfi_importance=pfi_importance.to_dict(),
             )
             append_record_csv(results_path, record)
 
