@@ -84,7 +84,10 @@ def run_single_experiment(
     seed = int(experiment_cfg.get("random_seed", 0))
 
     run_id = generate_run_id(prefix=run_name)
-    base_dir = Path(output_dir) if output_dir else Path("artifacts") / run_id
+    if output_dir:
+        base_dir = Path(output_dir) / run_id
+    else:
+        base_dir = Path("artifacts") / run_id
     base_dir.mkdir(parents=True, exist_ok=True)
 
     results_path = base_dir / "results.csv"
@@ -114,6 +117,9 @@ def run_single_experiment(
     model_cfg = cfg.get("model", {})
     model_name = model_cfg.get("name", "xgboost")
     model_params = model_cfg.get("params", {})
+
+    if model_name != "xgboost":
+        raise ValueError("Only model.name='xgboost' is supported for now")
 
     if not ratios:
         raise ValueError("resampling.target_positive_ratios must be non-empty")

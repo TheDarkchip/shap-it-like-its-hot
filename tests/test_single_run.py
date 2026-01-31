@@ -57,3 +57,11 @@ def test_run_single_experiment_requires_ratios(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="target_positive_ratios must be non-empty"):
         run_single_experiment(cfg, output_dir=tmp_path, data=_toy_data())
+
+
+def test_run_single_experiment_requires_xgboost(tmp_path: Path) -> None:
+    cfg = _config()
+    cfg["model"]["name"] = "random-forest"
+
+    with pytest.raises(ValueError, match="model.name='xgboost'"):
+        run_single_experiment(cfg, output_dir=tmp_path, data=_toy_data())
