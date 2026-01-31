@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from single_run import run_single_experiment
 
@@ -48,3 +49,11 @@ def test_run_single_experiment_writes_artifacts(tmp_path: Path) -> None:
     assert "shap_feature_a" in results.columns
     assert "shap_feature_b" in results.columns
     assert len(results) == 2  # 1 repeat x 2 folds x 1 ratio
+
+
+def test_run_single_experiment_requires_ratios(tmp_path: Path) -> None:
+    cfg = _config()
+    cfg["resampling"]["target_positive_ratios"] = []
+
+    with pytest.raises(ValueError, match="target_positive_ratios must be non-empty"):
+        run_single_experiment(cfg, output_dir=tmp_path, data=_toy_data())

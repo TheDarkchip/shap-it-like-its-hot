@@ -115,6 +115,9 @@ def run_single_experiment(
     model_name = model_cfg.get("name", "xgboost")
     model_params = model_cfg.get("params", {})
 
+    if not ratios:
+        raise ValueError("resampling.target_positive_ratios must be non-empty")
+
     logger.info(
         "Starting run: folds=%s repeats=%s ratios=%s model=%s",
         outer_folds,
@@ -142,6 +145,9 @@ def run_single_experiment(
                 target_positive_ratio=float(ratio),
                 random_state=repeat_seed,
             )
+            achieved_ratio = resampled.positive_count / (
+                resampled.positive_count + resampled.negative_count
+            )
             train_result = train_xgb_classifier(
                 resampled.X,
                 resampled.y,
@@ -157,7 +163,7 @@ def run_single_experiment(
                 repeat_id=repeat_id,
                 seed=repeat_seed,
                 model_name=model_name,
-                class_ratio=float(ratio),
+                class_ratio=achieved_ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
                 pfi_importance={},
