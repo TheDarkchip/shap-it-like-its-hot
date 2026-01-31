@@ -42,13 +42,16 @@ def record_to_frame(record: ResultRecord) -> pd.DataFrame:
         "class_ratio": record.class_ratio,
     }
 
-    for key, value in record.metrics.items():
+    for key in sorted(record.metrics.keys()):
+        value = record.metrics[key]
         row[f"metric_{key}"] = value
 
-    for key, value in record.shap_importance.items():
+    for key in sorted(record.shap_importance.keys()):
+        value = record.shap_importance[key]
         row[f"shap_{key}"] = value
 
-    for key, value in record.pfi_importance.items():
+    for key in sorted(record.pfi_importance.keys()):
+        value = record.pfi_importance[key]
         row[f"pfi_{key}"] = value
 
     return pd.DataFrame([row])
@@ -61,6 +64,8 @@ def append_record_csv(path: str | Path, record: ResultRecord) -> None:
 
     frame = record_to_frame(record)
     if output_path.exists():
+        existing_cols = pd.read_csv(output_path, nrows=0).columns
+        frame = frame.reindex(columns=existing_cols, fill_value=pd.NA)
         frame.to_csv(output_path, mode="a", index=False, header=False)
     else:
         frame.to_csv(output_path, index=False)

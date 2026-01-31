@@ -47,6 +47,29 @@ def test_append_record_csv(tmp_path: Path) -> None:
     assert frame.shape[0] == 2
 
 
+def test_append_record_csv_stable_column_order(tmp_path: Path) -> None:
+    path = tmp_path / "results.csv"
+    append_record_csv(path, _record())
+
+    swapped = ResultRecord(
+        fold_id=0,
+        repeat_id=1,
+        seed=42,
+        model_name="xgboost",
+        class_ratio=0.3,
+        metrics={"roc_auc": 0.71},
+        shap_importance={"f2": 0.1, "f1": 0.2},
+        pfi_importance={"f2": 0.05, "f1": 0.15},
+    )
+    append_record_csv(path, swapped)
+
+    frame = pd.read_csv(path)
+    assert frame.loc[1, "shap_f1"] == 0.2
+    assert frame.loc[1, "shap_f2"] == 0.1
+    assert frame.loc[1, "pfi_f1"] == 0.15
+    assert frame.loc[1, "pfi_f2"] == 0.05
+
+
 def test_write_records_parquet(tmp_path: Path) -> None:
     pytest.importorskip("pyarrow")
     path = tmp_path / "results.parquet"
