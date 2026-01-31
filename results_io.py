@@ -65,8 +65,17 @@ def append_record_csv(path: str | Path, record: ResultRecord) -> None:
     frame = record_to_frame(record)
     if output_path.exists():
         existing_cols = pd.read_csv(output_path, nrows=0).columns
-        frame = frame.reindex(columns=existing_cols, fill_value=pd.NA)
-        frame.to_csv(output_path, mode="a", index=False, header=False)
+        new_cols = [col for col in frame.columns if col not in existing_cols]
+        if new_cols:
+            full_cols = list(existing_cols) + sorted(new_cols)
+            existing = pd.read_csv(output_path)
+            existing = existing.reindex(columns=full_cols)
+            frame = frame.reindex(columns=full_cols, fill_value=pd.NA)
+            combined = pd.concat([existing, frame], ignore_index=True)
+            combined.to_csv(output_path, index=False)
+        else:
+            frame = frame.reindex(columns=existing_cols, fill_value=pd.NA)
+            frame.to_csv(output_path, mode="a", index=False, header=False)
     else:
         frame.to_csv(output_path, index=False)
 

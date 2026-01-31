@@ -70,6 +70,28 @@ def test_append_record_csv_stable_column_order(tmp_path: Path) -> None:
     assert frame.loc[1, "pfi_f2"] == 0.05
 
 
+def test_append_record_csv_expands_schema(tmp_path: Path) -> None:
+    path = tmp_path / "results.csv"
+    append_record_csv(path, _record())
+
+    expanded = ResultRecord(
+        fold_id=0,
+        repeat_id=1,
+        seed=42,
+        model_name="xgboost",
+        class_ratio=0.3,
+        metrics={"roc_auc": 0.71, "pr_auc": 0.44},
+        shap_importance={"f1": 0.2, "f2": 0.1},
+        pfi_importance={"f1": 0.15, "f2": 0.05},
+    )
+    append_record_csv(path, expanded)
+
+    frame = pd.read_csv(path)
+    assert "metric_pr_auc" in frame.columns
+    assert pd.isna(frame.loc[0, "metric_pr_auc"])
+    assert frame.loc[1, "metric_pr_auc"] == 0.44
+
+
 def test_write_records_parquet(tmp_path: Path) -> None:
     pytest.importorskip("pyarrow")
     path = tmp_path / "results.parquet"
