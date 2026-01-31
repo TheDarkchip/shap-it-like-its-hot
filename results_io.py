@@ -85,6 +85,9 @@ def write_records_parquet(path: str | Path, records: list[ResultRecord]) -> None
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    if not records:
+        return
+
     frames = [record_to_frame(record) for record in records]
-    combined = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    combined = pd.concat(frames, ignore_index=True)
     combined.to_parquet(output_path, index=False)

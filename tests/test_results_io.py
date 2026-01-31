@@ -101,6 +101,13 @@ def test_write_records_parquet(tmp_path: Path) -> None:
     assert frame.shape[0] == 1
 
 
+def test_write_records_parquet_empty_no_file(tmp_path: Path) -> None:
+    pytest.importorskip("pyarrow")
+    path = tmp_path / "empty.parquet"
+    write_records_parquet(path, [])
+    assert not path.exists()
+
+
 def test_validate_ratio_rejects_invalid() -> None:
     record = ResultRecord(
         fold_id=0,
