@@ -61,3 +61,29 @@ def test_configure_logging_includes_run_context() -> None:
     assert "run_id=run-123" in output
     assert "seed=42" in output
     assert "hello" in output
+
+
+def test_configure_logging_updates_run_context() -> None:
+    stream = io.StringIO()
+    logger = configure_logging(
+        run_id="run-a",
+        seed=1,
+        stream=stream,
+        force=True,
+        logger_name="test-logger-reconfigure",
+    )
+    logger.info("first")
+
+    configure_logging(
+        run_id="run-b",
+        seed=2,
+        stream=stream,
+        logger_name="test-logger-reconfigure",
+    )
+    logger.info("second")
+
+    output = stream.getvalue()
+    assert "run_id=run-a" in output
+    assert "seed=1" in output
+    assert "run_id=run-b" in output
+    assert "seed=2" in output

@@ -91,14 +91,22 @@ def configure_logging(
             handler.close()
             logger.removeHandler(handler)
 
-    if logger.handlers:
-        return logger
-
     context = RunContext(run_id=run_id, seed=seed)
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)s %(name)s run_id=%(run_id)s seed=%(seed)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    if logger.handlers:
+        for handler in logger.handlers:
+            handler.setFormatter(formatter)
+            handler.filters = [
+                existing
+                for existing in handler.filters
+                if not isinstance(existing, _RunContextFilter)
+            ]
+            handler.addFilter(_RunContextFilter(context))
+        return logger
 
     handlers: Iterable[logging.Handler]
     stream_handler = logging.StreamHandler(stream=stream)
