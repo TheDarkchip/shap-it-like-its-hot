@@ -36,9 +36,22 @@ uv run pytest
 # Lint and format
 uv run ruff check
 uv run ruff format
+
+# Run a single experiment (writes artifacts under ./artifacts/<run_id>/)
+uv run python scripts/run_single.py configs/example.yaml
+
+# Override the output directory (still creates a run_id subfolder)
+uv run python scripts/run_single.py configs/example.yaml --output-dir artifacts
 ```
 
 ### Data cache
 
 The German Credit dataset is downloaded on demand and cached at `./data/raw/` by default.
 Set `SHAP_IT_DATA_DIR` to override the cache directory.
+
+### Artifacts
+
+Single-run experiments create a run folder with:
+- `results.csv` (metrics + SHAP + PFI importances)
+- `run_metadata.json` (seed, environment, run_id)
+- `run.log` (structured logs with run id/seed)
