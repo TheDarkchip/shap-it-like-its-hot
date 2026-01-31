@@ -42,6 +42,7 @@ metrics:
     cfg = load_config(cfg_path)
     validate_config(cfg)
 
+
 def test_validate_config_resampling_not_mapping() -> None:
     cfg = {
         "experiment": {},

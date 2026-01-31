@@ -5,7 +5,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from results_io import ResultRecord, append_record_csv, record_to_frame, write_records_parquet
+from results_io import (
+    ResultRecord,
+    append_record_csv,
+    record_to_frame,
+    write_records_parquet,
+)
 
 
 def _record() -> ResultRecord:

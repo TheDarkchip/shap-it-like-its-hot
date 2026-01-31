@@ -9,10 +9,12 @@ from xgboost_wrapper import predict_proba, train_xgb_classifier
 
 def _toy_data(n: int = 50) -> tuple[pd.DataFrame, pd.Series]:
     rng = np.random.default_rng(0)
-    X = pd.DataFrame({
-        "x1": rng.normal(size=n),
-        "x2": rng.normal(size=n),
-    })
+    X = pd.DataFrame(
+        {
+            "x1": rng.normal(size=n),
+            "x2": rng.normal(size=n),
+        }
+    )
     y = pd.Series((X["x1"] + X["x2"] > 0).astype(int))
     return X, y
 
