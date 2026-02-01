@@ -1,8 +1,8 @@
 # Protocol: Nested CV Evaluation
 
 This document defines the evaluation protocol for the SHAP stability study and the
-outputs expected from each run. It is intentionally minimal and meant to match
-what is implemented in the codebase.
+outputs expected from each run. It is intentionally minimal and aligned with the
+current evaluation harness utilities.
 
 ## Goals
 
@@ -30,7 +30,7 @@ for repeat in 1..outer_repeats:
     split train/test indices
     for ratio in target_positive_ratios:
       resample train fold to ratio
-      run inner CV to select hyperparameters
+      run inner CV to select hyperparameters (if enabled)
       retrain model on full resampled train fold
       evaluate on untouched test fold
       compute SHAP + PFI on test fold
@@ -43,6 +43,8 @@ for repeat in 1..outer_repeats:
 - Metrics for selection come from the metrics config (primary metric).
 - Best params are selected, then the model is retrained on the full resampled
   training fold before final evaluation.
+- The standalone single-run script uses fixed model params; HPO is part of the
+  nested CV harness utilities.
 
 ## Metrics
 

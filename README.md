@@ -55,3 +55,7 @@ Single-run experiments create a run folder with:
 - `results.csv` (metrics + SHAP + PFI importances)
 - `run_metadata.json` (seed, environment, run_id)
 - `run.log` (structured logs with run id/seed)
+
+### Protocol
+
+See `docs/protocol.md` for the nested CV protocol, metrics, and evaluation flow.
