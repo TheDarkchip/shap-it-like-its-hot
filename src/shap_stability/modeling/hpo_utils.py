@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -41,6 +41,8 @@ def _evaluate_params(
     metric_name: str,
     inner_folds: int,
     seed: int,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
 ) -> float:
     splitter = StratifiedKFold(n_splits=inner_folds, shuffle=True, random_state=seed)
     scores: list[float] = []
@@ -49,6 +51,8 @@ def _evaluate_params(
     for fold_id, (train_idx, test_idx) in enumerate(splitter.split(X, y)):
         X_train = X.iloc[train_idx]
         y_train = y.iloc[train_idx]
+        if resample_fn is not None:
+            X_train, y_train = resample_fn(X_train, y_train, seed + fold_id)
         X_test = X.iloc[test_idx]
         y_test = y.iloc[test_idx]
 
@@ -74,6 +78,8 @@ def select_best_params(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
 ) -> tuple[dict[str, Any], float]:
     _validate_grid(param_grid)
 
@@ -92,6 +98,7 @@ def select_best_params(
             metric_name=metric_name,
             inner_folds=inner_folds,
             seed=seed,
+            resample_fn=resample_fn,
         )
 
         if best_score is None:
@@ -123,6 +130,8 @@ def tune_and_train(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
 ) -> HPOResult:
     best_params, best_score = select_best_params(
         X,
@@ -132,6 +141,7 @@ def tune_and_train(
         inner_folds=inner_folds,
         seed=seed,
         base_params=base_params,
+        resample_fn=resample_fn,
     )
 
     model_result = train_xgb_classifier(

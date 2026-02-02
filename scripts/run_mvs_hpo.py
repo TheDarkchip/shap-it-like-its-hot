@@ -16,13 +16,13 @@ from shap_stability.experiment_utils import create_run_metadata  # noqa: E402
 from shap_stability.experiment_utils import generate_run_id  # noqa: E402
 from shap_stability.experiment_utils import set_global_seed  # noqa: E402
 from shap_stability.data import load_german_credit  # noqa: E402
-from shap_stability.modeling.hpo_utils import tune_and_train  # noqa: E402
+from shap_stability.modeling.hpo_utils import HPOResult, select_best_params  # noqa: E402
 from shap_stability.explain.pfi_utils import compute_pfi_importance  # noqa: E402
 from shap_stability.resampling import resample_train_fold  # noqa: E402
 from shap_stability.metrics.results_io import ResultRecord, append_record_csv  # noqa: E402
 from shap_stability.explain.shap_utils import compute_tree_shap  # noqa: E402
 from shap_stability.metrics.stability import write_stability_summary  # noqa: E402
-from shap_stability.modeling.xgboost_wrapper import predict_proba  # noqa: E402
+from shap_stability.modeling.xgboost_wrapper import predict_proba, train_xgb_classifier  # noqa: E402
 from shap_stability.nested_cv import iter_outer_folds  # noqa: E402
 
 
@@ -100,13 +100,38 @@ def main() -> None:
             achieved_ratio = resampled.positive_count / (
                 resampled.positive_count + resampled.negative_count
             )
-            hpo = tune_and_train(
-                resampled.X,
-                resampled.y,
+            def _inner_resample(
+                X_inner: pd.DataFrame,
+                y_inner: pd.Series,
+                seed: int,
+            ) -> tuple[pd.DataFrame, pd.Series]:
+                inner_resampled = resample_train_fold(
+                    X_inner,
+                    y_inner,
+                    target_positive_ratio=ratio,
+                    random_state=seed,
+                )
+                return inner_resampled.X, inner_resampled.y
+
+            best_params, best_score = select_best_params(
+                X_train,
+                y_train,
                 param_grid=PARAM_GRID,
                 metric_name="roc_auc",
                 inner_folds=args.inner_folds,
                 seed=outer.seed,
+                resample_fn=_inner_resample,
+            )
+            train_result = train_xgb_classifier(
+                resampled.X,
+                resampled.y,
+                params=best_params,
+                random_state=outer.seed,
+            )
+            hpo = HPOResult(
+                best_params=best_params,
+                best_score=best_score,
+                model=train_result.model,
             )
             logger.info("Best HPO score=%.4f", hpo.best_score)
             proba = predict_proba(hpo.model, X_test)
