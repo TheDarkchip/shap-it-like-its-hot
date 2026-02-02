@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from html import parser
 from pathlib import Path
 
 import json
@@ -17,7 +16,7 @@ from shap_stability.experiment_utils import create_run_metadata  # noqa: E402
 from shap_stability.experiment_utils import generate_run_id  # noqa: E402
 from shap_stability.experiment_utils import set_global_seed  # noqa: E402
 from shap_stability.data import load_german_credit, one_hot_encode_train_test  # noqa: E402
-from shap_stability.modeling.hpo_utils import HPOResult, select_best_params  # noqa: E402
+from shap_stability.modeling.hpo_utils import HPOResult, tune_and_train  # noqa: E402
 from shap_stability.explain.pfi_utils import compute_pfi_importance  # noqa: E402
 from shap_stability.resampling import resample_train_fold  # noqa: E402
 from shap_stability.metrics.results_io import ResultRecord, append_record_csv  # noqa: E402
@@ -122,9 +121,13 @@ def main() -> None:
                 optimizer=args.optimizer,
                 budget=args.hpo_budget if use_space_opt else None,
                 param_space=PARAM_SPACE if use_space_opt else None,
+                smac_output_dir=str(results_dir / "smac3_output") if args.optimizer == "smac" else None,
             )
 
             logger.info("Best HPO score=%.4f", hpo.best_score)
+            X_train_enc, X_test_enc = one_hot_encode_train_test(
+                resampled.X, X_test_raw
+            )
             proba = predict_proba(hpo.model, X_test_enc)
             shap_result = compute_tree_shap(hpo.model, X_test_enc)
             pfi_result = compute_pfi_importance(

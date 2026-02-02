@@ -60,6 +60,8 @@ def select_best_params_smac(
     output_directory: str | Path | None = None,
     init_n_configs: int | None = None,
     init_max_ratio: float = 0.25,
+    resample_fn=None,
+    preprocess_fn=None,
 ) -> tuple[dict[str, Any], float]:
     if budget < 2:
         raise ValueError("SMAC budget must be >= 2")
@@ -77,7 +79,9 @@ def select_best_params_smac(
             params=params,
             metric_name=metric_name,
             inner_folds=inner_folds,
-            seed=seed, 
+            seed=seed,
+            resample_fn=resample_fn,
+            preprocess_fn=preprocess_fn,
         )
 
         if not np.isfinite(score):

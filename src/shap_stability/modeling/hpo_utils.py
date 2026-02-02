@@ -84,6 +84,11 @@ def select_best_params(
     optimizer: str = "grid",
     budget: int | None = None,
     param_space: dict[str, dict[str, Any]] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
+    smac_output_dir: str | None = None,
 ) -> tuple[dict[str, Any], float]:
     """
     Select best hyperparameters via inner CV.
@@ -112,6 +117,9 @@ def select_best_params(
             seed=seed,
             budget=budget,
             base_params=base_params,
+            resample_fn=resample_fn,
+            preprocess_fn=preprocess_fn,
+            output_directory=smac_output_dir,
         )
 
     if optimizer == "grid":
@@ -178,6 +186,11 @@ def tune_and_train(
     optimizer: str = "grid",
     budget: int | None = None,
     param_space: dict[str, dict[str, Any]] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
+    smac_output_dir: str | None = None,
 ) -> HPOResult:
     best_params, best_score = select_best_params(
         X,
@@ -190,6 +203,9 @@ def tune_and_train(
         optimizer=optimizer,
         budget=budget,
         param_space=param_space,
+        resample_fn=resample_fn,
+        preprocess_fn=preprocess_fn,
+        smac_output_dir=smac_output_dir,
     )
 
     if preprocess_fn is not None:
