@@ -16,7 +16,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from agreement_metrics import write_agreement_summary  # noqa: E402
-from experiment_utils import create_run_metadata, generate_run_id, set_global_seed  # noqa: E402
+from experiment_utils import configure_logging  # noqa: E402
+from experiment_utils import create_run_metadata  # noqa: E402
+from experiment_utils import generate_run_id  # noqa: E402
+from experiment_utils import set_global_seed  # noqa: E402
 from german_credit import load_german_credit  # noqa: E402
 from hpo_utils import tune_and_train  # noqa: E402
 from pfi_utils import compute_pfi_importance  # noqa: E402
@@ -55,6 +58,15 @@ def main() -> None:
     run_id = generate_run_id(prefix="mvs-hpo")
     results_dir = Path(args.output_dir) / run_id
     results_dir.mkdir(parents=True, exist_ok=True)
+    log_path = results_dir / "run.log"
+
+    logger = configure_logging(
+        run_id=run_id,
+        seed=args.seed,
+        log_file=log_path,
+        force=True,
+        logger_name="shap-it-like-its-hot",
+    )
 
     X_raw, y = load_german_credit()
     X = pd.get_dummies(X_raw, drop_first=False)
@@ -70,12 +82,19 @@ def main() -> None:
         outer_repeats=args.outer_repeats,
         seed=args.seed,
     ):
+        logger.info(
+            "Outer fold repeat=%s fold=%s seed=%s",
+            outer.repeat_id,
+            outer.fold_id,
+            outer.seed,
+        )
         X_train = X.iloc[outer.train_idx]
         y_train = y.iloc[outer.train_idx]
         X_test = X.iloc[outer.test_idx]
         y_test = y.iloc[outer.test_idx]
 
         for ratio in ratios:
+            logger.info("Resampling ratio=%.2f", ratio)
             resampled = resample_train_fold(
                 X_train,
                 y_train,
@@ -93,6 +112,7 @@ def main() -> None:
                 inner_folds=args.inner_folds,
                 seed=outer.seed,
             )
+            logger.info("Best HPO score=%.4f", hpo.best_score)
             proba = predict_proba(hpo.model, X_test)
             shap_result = compute_tree_shap(hpo.model, X_test)
             pfi_importance = compute_pfi_importance(
@@ -144,6 +164,7 @@ def main() -> None:
         json.dumps(metadata, indent=2), encoding="utf-8"
     )
 
+    logger.info("Results written to %s", results_dir)
     print(f"Wrote baseline results to {results_dir}")
 
 
