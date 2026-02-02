@@ -67,3 +67,15 @@ def test_dispersion_nan_for_zero_importance() -> None:
     with pytest.warns((RuntimeWarning, UserWarning)):
         summaries = summarize_stability(frame, ratios=[0.1], method="shap")
     assert np.isnan(summaries[0].mean_dispersion)
+
+
+def test_pfi_dispersion_uses_absolute_values() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "pfi_a": [0.1, -0.1],
+            "pfi_b": [0.2, -0.2],
+        }
+    )
+    summaries = summarize_stability(frame, ratios=[0.1], method="pfi")
+    assert np.isfinite(summaries[0].mean_dispersion)

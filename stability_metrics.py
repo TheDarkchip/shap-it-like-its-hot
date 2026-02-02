@@ -82,7 +82,8 @@ def summarize_stability(
         corrs = _pairwise_corr(ranks)
         mean_corr = float(np.mean(corrs)) if corrs else float("nan")
         magnitude_var = _magnitude_variance(values)
-        dispersions = [_dispersion(values[col]) for col in values.columns]
+        dispersion_values = values.abs() if method == "pfi" else values
+        dispersions = [_dispersion(dispersion_values[col]) for col in values.columns]
         mean_dispersion = float(np.nanmean(dispersions))
 
         summaries.append(
