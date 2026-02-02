@@ -137,7 +137,7 @@ def main() -> None:
                 repeat_id=outer.repeat_id,
                 seed=outer.seed,
                 model_name="xgboost",
-                class_ratio=achieved_ratio,
+                class_ratio=ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
                 pfi_importance=pfi_importance.to_dict(),
