@@ -1,0 +1,2 @@
+2026-02-01 15:31:34 INFO shap-it-like-its-hot run_id=example-20260201-143134-2ae7b08b seed=123 Starting run: folds=3 repeats=1 ratios=[0.3] model=xgboost
+2026-02-01 15:31:37 INFO shap-it-like-its-hot run_id=example-20260201-143134-2ae7b08b seed=123 Results written to results/single/example-20260201-143134-2ae7b08b/results.csv

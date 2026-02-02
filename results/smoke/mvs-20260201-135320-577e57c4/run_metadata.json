@@ -1,0 +1,9 @@
+{
+  "run_id": "mvs-20260201-135320-577e57c4",
+  "seed": 42,
+  "started_at": "2026-02-01T13:54:05.406377+00:00",
+  "python_version": "3.11.14",
+  "platform": "macOS-26.2-x86_64-i386-64bit",
+  "cwd": "/Users/shilinjosline/Documents/GitHub/shap-it-like-its-hot/Untitled",
+  "experiment": "mvs"
+}
