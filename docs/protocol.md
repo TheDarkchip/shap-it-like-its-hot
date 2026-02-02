@@ -31,8 +31,15 @@ for repeat in 1..outer_repeats:
   for fold in 1..outer_folds:
     split train/test indices
     for ratio in target_positive_ratios:
-      resample train fold to ratio
-      run inner CV to select hyperparameters (if enabled)
+      if HPO enabled:
+        run inner CV on outer training fold:
+          for each inner split:
+            resample inner training fold to ratio
+            encode inner train; encode inner validation to same columns
+            fit/evaluate; aggregate inner metric
+        choose best params
+      resample full outer training fold to ratio
+      encode outer train; encode outer test to same columns
       retrain model on full resampled train fold
       evaluate on untouched test fold
       compute SHAP + PFI on test fold
@@ -43,7 +50,7 @@ for repeat in 1..outer_repeats:
 
 - Inner CV uses stratified K-fold on the **original outer training fold**.
 - For each inner split, the **inner training fold is resampled** to the target
-  ratio, then encoded, and the inner test fold is encoded to the same columns.
+  ratio, then encoded, and the inner validation fold is encoded to the same columns.
 - Metrics for selection come from the metrics config (primary metric).
 - Best params are selected, then the model is retrained on the full resampled
   outer training fold (with fold-fitted encoding) before final evaluation.
@@ -69,3 +76,8 @@ Each run produces a run directory with:
 - Leakage: train/test indices never overlap within outer folds.
 - Determinism: resampling is repeatable given a fixed seed.
 - Metric sanity: metrics are finite or NaN for single-class folds.
+
+## Randomness and reproducibility
+
+- All stochastic components (outer split, inner split, resampling, PFI permutations)
+  are seeded from a base seed deterministically as a function of repeat/fold/ratio.
