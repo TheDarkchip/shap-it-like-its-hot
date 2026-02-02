@@ -40,9 +40,10 @@ def _load_importance(
 def _topk_overlap(a: pd.Series, b: pd.Series, k: int) -> float:
     top_a = set(a.nlargest(k).index)
     top_b = set(b.nlargest(k).index)
-    if not top_a and not top_b:
+    denom = min(k, len(a), len(b))
+    if denom == 0:
         return float("nan")
-    return len(top_a.intersection(top_b)) / float(k)
+    return len(top_a.intersection(top_b)) / float(denom)
 
 
 def _cosine_similarity(a: pd.Series, b: pd.Series) -> float:

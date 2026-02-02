@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from agreement_metrics import summarize_agreement, write_agreement_summary
 
@@ -41,3 +42,19 @@ def test_write_agreement_summary_writes_csv(tmp_path: Path) -> None:
 
     assert out_path.exists()
     assert len(out_frame) == 1
+
+
+def test_topk_overlap_caps_at_feature_count() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [0.3, 0.2],
+            "shap_b": [0.1, 0.2],
+            "pfi_a": [0.3, 0.2],
+            "pfi_b": [0.1, 0.2],
+        }
+    )
+    # Constant-input warning is expected for Spearman correlation in this toy case.
+    with pytest.warns((UserWarning, RuntimeWarning)):
+        summaries = summarize_agreement(frame, ratios=[0.1], top_k=5)
+    assert summaries[0].mean_topk_overlap == 1.0
