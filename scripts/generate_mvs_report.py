@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -239,10 +240,21 @@ def generate_report(results_dir: Path) -> None:
     stability_path = results_dir / "stability_summary.csv"
     agreement_path = results_dir / "agreement_summary.csv"
     results_path = results_dir / "results.csv"
+    metadata_path = results_dir / "run_metadata.json"
 
     stability = pd.read_csv(stability_path)
     agreement = pd.read_csv(agreement_path)
     results = pd.read_csv(results_path)
+    if not metadata_path.exists():
+        raise FileNotFoundError(
+            f"Missing run metadata at {metadata_path}; cannot determine top-k."
+        )
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if "agreement_top_k" not in metadata:
+        raise KeyError(
+            "run_metadata.json missing 'agreement_top_k'; regenerate run metadata before plotting."
+        )
+    top_k = int(metadata["agreement_top_k"])
 
     plots_dir = results_dir / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)
@@ -306,7 +318,6 @@ def generate_report(results_dir: Path) -> None:
 
     agreement_sorted = agreement.sort_values("ratio")
     agreement_rows = []
-    top_k = 5
     n_folds = None
     for ratio in ratios:
         shap_values = _collect_importances(results, prefix="shap_", ratio=ratio)

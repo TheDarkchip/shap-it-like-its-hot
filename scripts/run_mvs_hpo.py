@@ -38,6 +38,7 @@ PARAM_GRID = {
     "subsample": [0.8, 1.0],
     "colsample_bytree": [0.8, 1.0],
 }
+AGREEMENT_TOP_K = 5
 
 
 def parse_args() -> argparse.Namespace:
@@ -147,7 +148,12 @@ def main() -> None:
     frame = pd.read_csv(results_path)
     ratios = sorted(frame["class_ratio"].unique())
     write_stability_summary(frame, ratios=ratios, output_path=results_dir / "stability_summary.csv")
-    write_agreement_summary(frame, ratios=ratios, output_path=results_dir / "agreement_summary.csv")
+    write_agreement_summary(
+        frame,
+        ratios=ratios,
+        output_path=results_dir / "agreement_summary.csv",
+        top_k=AGREEMENT_TOP_K,
+    )
 
     metadata = create_run_metadata(
         run_id=run_id,
@@ -158,6 +164,7 @@ def main() -> None:
             "inner_folds": args.inner_folds,
             "pfi_repeats": args.pfi_repeats,
             "param_grid": PARAM_GRID,
+            "agreement_top_k": AGREEMENT_TOP_K,
         },
     )
     (results_dir / "run_metadata.json").write_text(
