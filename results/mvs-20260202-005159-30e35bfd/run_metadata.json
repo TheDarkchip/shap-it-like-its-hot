@@ -1,9 +1,0 @@
-{
-  "run_id": "mvs-20260202-005159-30e35bfd",
-  "seed": 42,
-  "started_at": "2026-02-02T00:52:19.459551+00:00",
-  "python_version": "3.13.7",
-  "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
-  "cwd": "/Users/robin/Uni/iml/shap-it-like-its-hot",
-  "experiment": "mvs"
-}
