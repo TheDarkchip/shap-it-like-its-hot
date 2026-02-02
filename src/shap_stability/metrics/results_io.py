@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,7 @@ class ResultRecord:
     metrics: dict[str, float]
     shap_importance: dict[str, float]
     pfi_importance: dict[str, float]
+    pfi_importance_std: dict[str, float] = field(default_factory=dict)
 
 
 def _validate_record(record: ResultRecord) -> None:
@@ -53,6 +54,9 @@ def record_to_frame(record: ResultRecord) -> pd.DataFrame:
     for key in sorted(record.pfi_importance.keys()):
         value = record.pfi_importance[key]
         row[f"pfi_{key}"] = value
+    for key in sorted(record.pfi_importance_std.keys()):
+        value = record.pfi_importance_std[key]
+        row[f"pfi_std_{key}"] = value
 
     return pd.DataFrame([row])
 

@@ -10,6 +10,7 @@ from shap_stability.data import (
     download_german_credit,
     iter_german_credit_columns,
     load_german_credit,
+    one_hot_encode_train_test,
 )
 
 SAMPLE_DATA = """\
@@ -102,3 +103,25 @@ def test_iter_german_credit_columns_numeric_only() -> None:
 
     # Should be sorted alphabetically
     assert columns == sorted(columns)
+
+
+def test_one_hot_encode_train_test_aligns_columns() -> None:
+    train = pd.DataFrame(
+        {
+            "checking_status": pd.Series(["A11", "A12"], dtype="category"),
+            "age_years": [20, 30],
+        }
+    )
+    test = pd.DataFrame(
+        {
+            "checking_status": pd.Series(["A13"], dtype="category"),
+            "age_years": [40],
+        }
+    )
+
+    train_enc, test_enc = one_hot_encode_train_test(train, test)
+
+    assert list(train_enc.columns) == list(test_enc.columns)
+    assert "checking_status_A11" in train_enc.columns
+    assert "checking_status_A13" not in train_enc.columns
+    assert "checking_status_A13" not in test_enc.columns

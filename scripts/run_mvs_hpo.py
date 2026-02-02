@@ -16,14 +16,14 @@ from shap_stability.experiment_utils import configure_logging  # noqa: E402
 from shap_stability.experiment_utils import create_run_metadata  # noqa: E402
 from shap_stability.experiment_utils import generate_run_id  # noqa: E402
 from shap_stability.experiment_utils import set_global_seed  # noqa: E402
-from shap_stability.data import load_german_credit  # noqa: E402
-from shap_stability.modeling.hpo_utils import tune_and_train  # noqa: E402
+from shap_stability.data import load_german_credit, one_hot_encode_train_test  # noqa: E402
+from shap_stability.modeling.hpo_utils import HPOResult, select_best_params  # noqa: E402
 from shap_stability.explain.pfi_utils import compute_pfi_importance  # noqa: E402
 from shap_stability.resampling import resample_train_fold  # noqa: E402
 from shap_stability.metrics.results_io import ResultRecord, append_record_csv  # noqa: E402
 from shap_stability.explain.shap_utils import compute_tree_shap  # noqa: E402
 from shap_stability.metrics.stability import write_stability_summary  # noqa: E402
-from shap_stability.modeling.xgboost_wrapper import predict_proba  # noqa: E402
+from shap_stability.modeling.xgboost_wrapper import predict_proba, train_xgb_classifier  # noqa: E402
 from shap_stability.nested_cv import iter_outer_folds  # noqa: E402
 
 PARAM_SPACE = {
@@ -77,14 +77,12 @@ def main() -> None:
     )
 
     X_raw, y = load_german_credit()
-    X = pd.get_dummies(X_raw, drop_first=False)
-    X = X.reindex(sorted(X.columns), axis=1)
 
     ratios = [0.1, 0.3, 0.5]
     results_path = results_dir / "results.csv"
 
     for outer in iter_outer_folds(
-        X,
+        X_raw,
         y,
         outer_folds=args.outer_folds,
         outer_repeats=args.outer_repeats,
@@ -96,10 +94,11 @@ def main() -> None:
             outer.fold_id,
             outer.seed,
         )
-        X_train = X.iloc[outer.train_idx]
+        X_train_raw = X_raw.iloc[outer.train_idx]
         y_train = y.iloc[outer.train_idx]
-        X_test = X.iloc[outer.test_idx]
+        X_test_raw = X_raw.iloc[outer.test_idx]
         y_test = y.iloc[outer.test_idx]
+        X_train, X_test = one_hot_encode_train_test(X_train_raw, X_test_raw)
 
         for ratio in ratios:
             logger.info("Resampling ratio=%.2f", ratio)
@@ -126,11 +125,11 @@ def main() -> None:
             )
 
             logger.info("Best HPO score=%.4f", hpo.best_score)
-            proba = predict_proba(hpo.model, X_test)
-            shap_result = compute_tree_shap(hpo.model, X_test)
-            pfi_importance = compute_pfi_importance(
+            proba = predict_proba(hpo.model, X_test_enc)
+            shap_result = compute_tree_shap(hpo.model, X_test_enc)
+            pfi_result = compute_pfi_importance(
                 hpo.model,
-                X_test,
+                X_test_enc,
                 y_test,
                 metric_name="roc_auc",
                 n_repeats=args.pfi_repeats,
@@ -153,7 +152,8 @@ def main() -> None:
                 class_ratio=ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
-                pfi_importance=pfi_importance.to_dict(),
+                pfi_importance=pfi_result.mean.to_dict(),
+                pfi_importance_std=pfi_result.std.to_dict(),
             )
             append_record_csv(results_path, record)
 

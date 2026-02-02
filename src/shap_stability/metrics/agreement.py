@@ -13,6 +13,7 @@ import pandas as pd
 @dataclass(frozen=True)
 class AgreementSummary:
     ratio: float
+    variant: str
     mean_spearman: float
     mean_topk_overlap: float
     mean_cosine: float
@@ -65,7 +66,10 @@ def summarize_agreement(
     *,
     ratios: Iterable[float],
     top_k: int = 5,
+    variant: str = "magnitude",
 ) -> list[AgreementSummary]:
+    if variant not in {"directional", "magnitude"}:
+        raise ValueError("variant must be 'directional' or 'magnitude'")
     summaries: list[AgreementSummary] = []
 
     for ratio in ratios:
@@ -77,17 +81,28 @@ def summarize_agreement(
         cosines: list[float] = []
 
         for col in shap_values.columns:
-            shap_vec = shap_values[col].abs()
-            pfi_vec = pfi_values[col].abs()
+            shap_vec = (
+                shap_values[col].abs() if variant == "magnitude" else shap_values[col]
+            )
+            pfi_vec = (
+                pfi_values[col].abs() if variant == "magnitude" else pfi_values[col]
+            )
+            overlap_shap = (
+                shap_values[col].abs() if variant == "directional" else shap_vec
+            )
+            overlap_pfi = (
+                pfi_values[col].abs() if variant == "directional" else pfi_vec
+            )
             corr = shap_vec.corr(pfi_vec, method="spearman")
             if corr is not None and not np.isnan(corr):
                 corrs.append(float(corr))
-            overlaps.append(_topk_overlap(shap_vec, pfi_vec, top_k))
+            overlaps.append(_topk_overlap(overlap_shap, overlap_pfi, top_k))
             cosines.append(_cosine_similarity(shap_vec, pfi_vec))
 
         summaries.append(
             AgreementSummary(
                 ratio=float(ratio),
+                variant=variant,
                 mean_spearman=float(np.nanmean(corrs)),
                 mean_topk_overlap=float(np.nanmean(overlaps)),
                 mean_cosine=float(np.nanmean(cosines)),
@@ -104,8 +119,13 @@ def write_agreement_summary(
     ratios: Iterable[float],
     output_path: str | Path,
     top_k: int = 5,
+    variants: Iterable[str] = ("magnitude", "directional"),
 ) -> pd.DataFrame:
-    summaries = summarize_agreement(frame, ratios=ratios, top_k=top_k)
+    summaries: list[AgreementSummary] = []
+    for variant in variants:
+        summaries.extend(
+            summarize_agreement(frame, ratios=ratios, top_k=top_k, variant=variant)
+        )
     out_frame = pd.DataFrame([summary.__dict__ for summary in summaries])
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)

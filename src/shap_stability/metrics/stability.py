@@ -14,7 +14,9 @@ import pandas as pd
 class StabilitySummary:
     ratio: float
     method: str
+    variant: str
     mean_rank_corr: float
+    mean_topk_overlap: float
     mean_magnitude_var: float
     mean_dispersion: float
     n_folds: int
@@ -33,6 +35,28 @@ def _pairwise_corr(ranks: pd.DataFrame) -> list[float]:
             if corr is not None and not np.isnan(corr):
                 corrs.append(float(corr))
     return corrs
+
+
+def _topk_overlap(a: pd.Series, b: pd.Series, k: int) -> float:
+    a_clean = a.dropna()
+    b_clean = b.dropna()
+    top_a = set(a_clean.nlargest(k).index)
+    top_b = set(b_clean.nlargest(k).index)
+    denom = min(k, len(a_clean), len(b_clean))
+    if denom == 0:
+        return float("nan")
+    return len(top_a.intersection(top_b)) / float(denom)
+
+
+def _pairwise_topk_overlap(values: pd.DataFrame, k: int, *, use_abs: bool) -> list[float]:
+    cols = list(values.columns)
+    overlaps: list[float] = []
+    for i in range(len(cols)):
+        for j in range(i + 1, len(cols)):
+            left = values[cols[i]].abs() if use_abs else values[cols[i]]
+            right = values[cols[j]].abs() if use_abs else values[cols[j]]
+            overlaps.append(_topk_overlap(left, right, k))
+    return overlaps
 
 
 def _normalize_columns(values: pd.DataFrame) -> pd.DataFrame:
@@ -83,28 +107,37 @@ def summarize_stability(
     *,
     ratios: Iterable[float],
     method: str,
+    variant: str = "magnitude",
+    top_k: int = 5,
 ) -> list[StabilitySummary]:
     if method not in {"shap", "pfi"}:
         raise ValueError("method must be 'shap' or 'pfi'")
+    if variant not in {"directional", "magnitude"}:
+        raise ValueError("variant must be 'directional' or 'magnitude'")
     prefix = f"{method}_"
     summaries: list[StabilitySummary] = []
 
     for ratio in ratios:
         values = _collect_importances(frame, prefix=prefix, ratio=ratio)
-        ranks = values.apply(_rank_vector, axis=0)
+        variant_values = values.abs() if variant == "magnitude" else values
+        ranks = variant_values.apply(_rank_vector, axis=0)
         corrs = _pairwise_corr(ranks)
         mean_corr = float(np.mean(corrs)) if corrs else float("nan")
-        magnitude_values = values.abs() if method == "pfi" else values
-        magnitude_var = _magnitude_variance(magnitude_values)
-        dispersion_values = magnitude_values
-        dispersions = [_dispersion(dispersion_values[col]) for col in values.columns]
+        overlaps = _pairwise_topk_overlap(
+            variant_values, top_k, use_abs=(variant == "directional")
+        )
+        mean_topk = float(np.nanmean(overlaps)) if overlaps else float("nan")
+        magnitude_var = _magnitude_variance(variant_values)
+        dispersions = [_dispersion(variant_values[col]) for col in values.columns]
         mean_dispersion = float(np.nanmean(dispersions))
 
         summaries.append(
             StabilitySummary(
                 ratio=float(ratio),
                 method=method,
+                variant=variant,
                 mean_rank_corr=mean_corr,
+                mean_topk_overlap=mean_topk,
                 mean_magnitude_var=magnitude_var,
                 mean_dispersion=mean_dispersion,
                 n_folds=values.shape[1],
@@ -119,10 +152,21 @@ def write_stability_summary(
     *,
     ratios: Iterable[float],
     output_path: str | Path,
+    variants: Iterable[str] = ("magnitude", "directional"),
+    top_k: int = 5,
 ) -> pd.DataFrame:
     summaries = []
     for method in ("shap", "pfi"):
-        summaries.extend(summarize_stability(frame, ratios=ratios, method=method))
+        for variant in variants:
+            summaries.extend(
+                summarize_stability(
+                    frame,
+                    ratios=ratios,
+                    method=method,
+                    variant=variant,
+                    top_k=top_k,
+                )
+            )
 
     out_frame = pd.DataFrame([summary.__dict__ for summary in summaries])
     output_path = Path(output_path)

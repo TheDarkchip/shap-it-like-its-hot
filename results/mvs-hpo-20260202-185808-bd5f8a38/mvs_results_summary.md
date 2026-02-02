@@ -73,7 +73,6 @@ Mean per-feature permutation std by ratio: 0.1: 2.822e-03, 0.3: 2.762e-03, 0.5: 
 - Magnitude-variance plots show mean with bootstrap SD across folds (dispersion, not inferential CIs).
 - Directional variant preserves sign for correlation/cosine metrics; top-k overlap uses magnitudes to track important-feature membership.
 - Agreement/stability top-k uses k=5 from run metadata.
-- SHAP importance = mean absolute SHAP value over test samples; PFI importance = baseline metric − permuted metric (mean decrease).
 
 ## Files generated
 

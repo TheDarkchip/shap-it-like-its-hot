@@ -26,7 +26,7 @@ def test_compute_pfi_importance_prefers_signal() -> None:
     model = LogisticRegression(max_iter=200)
     model.fit(X, y)
 
-    importances = compute_pfi_importance(
+    result = compute_pfi_importance(
         model,
         X,
         y,
@@ -35,8 +35,9 @@ def test_compute_pfi_importance_prefers_signal() -> None:
         random_state=0,
     )
 
-    assert set(importances.index) == {"signal", "noise"}
-    assert importances["signal"] > importances["noise"]
+    assert set(result.mean.index) == {"signal", "noise"}
+    assert set(result.std.index) == {"signal", "noise"}
+    assert result.mean["signal"] > result.mean["noise"]
 
 
 def test_compute_pfi_importance_supports_log_loss() -> None:
@@ -44,7 +45,7 @@ def test_compute_pfi_importance_supports_log_loss() -> None:
     model = LogisticRegression(max_iter=200)
     model.fit(X, y)
 
-    importances = compute_pfi_importance(
+    result = compute_pfi_importance(
         model,
         X,
         y,
@@ -53,8 +54,8 @@ def test_compute_pfi_importance_supports_log_loss() -> None:
         random_state=0,
     )
 
-    assert set(importances.index) == {"signal", "noise"}
-    assert importances.notna().all()
+    assert set(result.mean.index) == {"signal", "noise"}
+    assert result.mean.notna().all()
 
 
 def test_compute_pfi_importance_handles_single_class() -> None:
@@ -63,7 +64,7 @@ def test_compute_pfi_importance_handles_single_class() -> None:
     model = DummyClassifier(strategy="most_frequent")
     model.fit(X, y)
 
-    importances = compute_pfi_importance(
+    result = compute_pfi_importance(
         model,
         X,
         y,
@@ -72,7 +73,8 @@ def test_compute_pfi_importance_handles_single_class() -> None:
         random_state=0,
     )
 
-    assert np.isnan(importances).all()
+    assert np.isnan(result.mean).all()
+    assert np.isnan(result.std).all()
 
 
 def test_compute_pfi_importance_rejects_unknown_metric() -> None:

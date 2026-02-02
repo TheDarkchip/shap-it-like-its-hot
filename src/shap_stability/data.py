@@ -138,6 +138,18 @@ def iter_german_credit_columns(*, numeric_only: bool = False) -> Iterable[str]:
     return iter(GERMAN_CREDIT_COLUMNS)
 
 
+def one_hot_encode_train_test(
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Fit one-hot encoding on train and align test columns."""
+    train_encoded = pd.get_dummies(X_train, drop_first=False)
+    test_encoded = pd.get_dummies(X_test, drop_first=False)
+    train_encoded = train_encoded.reindex(sorted(train_encoded.columns), axis=1)
+    test_encoded = test_encoded.reindex(columns=train_encoded.columns, fill_value=0.0)
+    return train_encoded, test_encoded
+
+
 if __name__ == "__main__":
     dataset_path = download_german_credit()
     print(dataset_path)

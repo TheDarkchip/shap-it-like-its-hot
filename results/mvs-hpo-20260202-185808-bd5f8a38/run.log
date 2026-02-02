@@ -1,0 +1,176 @@
+2026-02-02 19:58:08 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=0 fold=0 seed=42
+2026-02-02 19:58:08 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:10 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7620
+2026-02-02 19:58:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:13 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7880
+2026-02-02 19:58:14 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:16 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7684
+2026-02-02 19:58:17 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=0 fold=1 seed=42
+2026-02-02 19:58:17 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7380
+2026-02-02 19:58:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:21 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7980
+2026-02-02 19:58:22 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:24 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7890
+2026-02-02 19:58:25 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=0 fold=2 seed=42
+2026-02-02 19:58:25 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:27 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7340
+2026-02-02 19:58:27 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7783
+2026-02-02 19:58:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:32 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7810
+2026-02-02 19:58:33 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=0 fold=3 seed=42
+2026-02-02 19:58:33 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:35 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7551
+2026-02-02 19:58:36 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:38 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7710
+2026-02-02 19:58:38 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7492
+2026-02-02 19:58:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=0 fold=4 seed=42
+2026-02-02 19:58:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:43 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7704
+2026-02-02 19:58:44 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:46 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7831
+2026-02-02 19:58:47 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:49 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7741
+2026-02-02 19:58:50 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=1 fold=0 seed=43
+2026-02-02 19:58:50 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:58:52 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7590
+2026-02-02 19:58:52 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:58:54 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7828
+2026-02-02 19:58:55 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:58:57 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7554
+2026-02-02 19:58:58 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=1 fold=1 seed=43
+2026-02-02 19:58:58 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:00 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7619
+2026-02-02 19:59:00 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:02 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.8019
+2026-02-02 19:59:03 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:05 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7970
+2026-02-02 19:59:06 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=1 fold=2 seed=43
+2026-02-02 19:59:06 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:08 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7482
+2026-02-02 19:59:09 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7929
+2026-02-02 19:59:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:13 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7950
+2026-02-02 19:59:14 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=1 fold=3 seed=43
+2026-02-02 19:59:14 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:16 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7510
+2026-02-02 19:59:17 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7827
+2026-02-02 19:59:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:21 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7655
+2026-02-02 19:59:22 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=1 fold=4 seed=43
+2026-02-02 19:59:22 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:24 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7742
+2026-02-02 19:59:25 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:27 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.8030
+2026-02-02 19:59:27 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:29 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7817
+2026-02-02 19:59:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=2 fold=0 seed=44
+2026-02-02 19:59:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:32 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7776
+2026-02-02 19:59:33 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:35 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7998
+2026-02-02 19:59:35 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:37 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7915
+2026-02-02 19:59:38 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=2 fold=1 seed=44
+2026-02-02 19:59:38 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:40 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7671
+2026-02-02 19:59:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:43 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7982
+2026-02-02 19:59:44 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:46 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7875
+2026-02-02 19:59:46 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=2 fold=2 seed=44
+2026-02-02 19:59:46 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:48 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7731
+2026-02-02 19:59:49 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:51 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7961
+2026-02-02 19:59:52 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 19:59:54 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7935
+2026-02-02 19:59:55 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=2 fold=3 seed=44
+2026-02-02 19:59:55 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 19:59:57 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7308
+2026-02-02 19:59:57 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 19:59:59 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7756
+2026-02-02 20:00:00 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:02 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7712
+2026-02-02 20:00:03 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=2 fold=4 seed=44
+2026-02-02 20:00:03 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:05 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7538
+2026-02-02 20:00:05 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:07 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7634
+2026-02-02 20:00:08 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:10 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7457
+2026-02-02 20:00:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=3 fold=0 seed=45
+2026-02-02 20:00:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:13 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7430
+2026-02-02 20:00:14 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:16 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7837
+2026-02-02 20:00:16 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:18 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7645
+2026-02-02 20:00:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=3 fold=1 seed=45
+2026-02-02 20:00:19 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:21 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7694
+2026-02-02 20:00:22 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:24 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7905
+2026-02-02 20:00:25 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:27 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7863
+2026-02-02 20:00:28 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=3 fold=2 seed=45
+2026-02-02 20:00:28 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7598
+2026-02-02 20:00:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:32 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7920
+2026-02-02 20:00:33 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:35 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7830
+2026-02-02 20:00:36 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=3 fold=3 seed=45
+2026-02-02 20:00:36 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:38 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7524
+2026-02-02 20:00:39 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7787
+2026-02-02 20:00:41 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:44 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7658
+2026-02-02 20:00:44 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=3 fold=4 seed=45
+2026-02-02 20:00:44 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:46 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7567
+2026-02-02 20:00:47 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:49 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7756
+2026-02-02 20:00:50 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:00:52 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7662
+2026-02-02 20:00:53 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=4 fold=0 seed=46
+2026-02-02 20:00:53 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:00:55 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7412
+2026-02-02 20:00:55 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:00:58 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7855
+2026-02-02 20:00:58 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:01:00 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7755
+2026-02-02 20:01:01 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=4 fold=1 seed=46
+2026-02-02 20:01:01 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:01:03 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7404
+2026-02-02 20:01:04 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:01:06 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7868
+2026-02-02 20:01:06 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:01:09 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7729
+2026-02-02 20:01:09 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=4 fold=2 seed=46
+2026-02-02 20:01:09 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:01:11 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7502
+2026-02-02 20:01:12 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:01:14 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7873
+2026-02-02 20:01:15 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:01:17 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7623
+2026-02-02 20:01:18 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=4 fold=3 seed=46
+2026-02-02 20:01:18 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:01:20 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7531
+2026-02-02 20:01:20 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:01:22 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7804
+2026-02-02 20:01:23 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:01:25 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7784
+2026-02-02 20:01:26 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Outer fold repeat=4 fold=4 seed=46
+2026-02-02 20:01:26 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.10
+2026-02-02 20:01:28 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7533
+2026-02-02 20:01:28 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.30
+2026-02-02 20:01:30 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7935
+2026-02-02 20:01:31 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Resampling ratio=0.50
+2026-02-02 20:01:33 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Best HPO score=0.7895
+2026-02-02 20:01:36 INFO shap-it-like-its-hot run_id=mvs-hpo-20260202-185808-bd5f8a38 seed=42 Results written to results/mvs-hpo-20260202-185808-bd5f8a38

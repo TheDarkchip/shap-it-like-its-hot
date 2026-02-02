@@ -9,18 +9,24 @@ current evaluation harness utilities.
 - Compare SHAP and permutation feature importance (PFI) under training-imbalance
   changes while keeping evaluation folds untouched.
 - Ensure protocol is leakage-safe and reproducible across random seeds.
+- All ratios are evaluated on the same outer test fold within a given
+  (repeat, fold), enabling paired comparisons across ratios.
 
 ## Data and preprocessing
 
 - Dataset: Statlog German Credit.
 - Target: binary label with "bad" as positive class (1).
-- Categorical features are one-hot encoded prior to modeling.
+- Categorical features are one-hot encoded **within each fold**:
+  fit on the training split and applied to the matching test split with
+  aligned columns.
 
 ## Splits and resampling
 
 - Use repeated stratified K-fold on the **outer** split.
 - Within each outer fold, resample only the training data to target positive
   class ratios (e.g., 0.1, 0.3, 0.5). The test fold is never resampled.
+- Resampling preserves total sample size and uses replacement when a class
+  must be oversampled.
 
 ## Nested CV flow (pseudocode)
 
@@ -29,8 +35,15 @@ for repeat in 1..outer_repeats:
   for fold in 1..outer_folds:
     split train/test indices
     for ratio in target_positive_ratios:
-      resample train fold to ratio
-      run inner CV to select hyperparameters (if enabled)
+      if HPO enabled:
+        run inner CV on outer training fold:
+          for each inner split:
+            resample inner training fold to ratio
+            encode inner train; encode inner validation to same columns
+            fit/evaluate; aggregate inner metric
+        choose best params
+      resample full outer training fold to ratio
+      encode outer train; encode outer test to same columns
       retrain model on full resampled train fold
       evaluate on untouched test fold
       compute SHAP + PFI on test fold
@@ -39,24 +52,32 @@ for repeat in 1..outer_repeats:
 
 ## Inner CV (hyperparameter search)
 
-- Inner CV uses stratified K-fold on the resampled training fold.
+- Inner CV uses stratified K-fold on the **original outer training fold**.
+- For each inner split, the **inner training fold is resampled** to the target
+  ratio, then encoded, and the inner validation fold is encoded to the same columns.
 - Metrics for selection come from the metrics config (primary metric).
 - Best params are selected, then the model is retrained on the full resampled
-  training fold before final evaluation.
+  outer training fold (with fold-fitted encoding) before final evaluation.
 - The standalone single-run script uses fixed model params; HPO is part of the
   nested CV harness utilities.
+- HPO is performed per ratio, so ratio effects include both resampling and
+  ratio-specific hyperparameter choices.
 
 ## Metrics
 
 - Primary metric: ROC AUC (default).
 - Additional metrics: PR AUC and log loss (configurable).
 - PFI uses the **primary** metric for permutation scoring.
+- SHAP importance = mean absolute SHAP value over test samples.
+- PFI importance = baseline metric − permuted metric (mean decrease in primary
+  metric over permutations; std tracked separately as within-fold uncertainty).
 
 ## Artifacts
 
 Each run produces a run directory with:
 
-- `results.csv` with fold-level metrics, SHAP importances, and PFI importances.
+- `results.csv` with fold-level metrics, SHAP importances, PFI importances, and
+  per-feature PFI permutation std (`pfi_std_*` columns).
 - `run_metadata.json` capturing run id, seed, and environment.
 - `run.log` with structured logging.
 
@@ -65,3 +86,8 @@ Each run produces a run directory with:
 - Leakage: train/test indices never overlap within outer folds.
 - Determinism: resampling is repeatable given a fixed seed.
 - Metric sanity: metrics are finite or NaN for single-class folds.
+
+## Randomness and reproducibility
+
+- All stochastic components (outer split, inner split, resampling, PFI permutations)
+  are seeded from a base seed deterministically as a function of repeat/fold/ratio.

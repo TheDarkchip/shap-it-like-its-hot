@@ -175,6 +175,12 @@ def _magnitude_variance(values: pd.DataFrame) -> float:
     return float(normalized.var(axis=1, ddof=1).mean())
 
 
+def _apply_variant(values: pd.DataFrame, variant: str) -> pd.DataFrame:
+    if variant == "magnitude":
+        return values.abs()
+    return values
+
+
 def _bootstrap_magnitude_stats(
     values: pd.DataFrame,
     *,
@@ -229,16 +235,19 @@ def _agreement_per_fold(
     pfi_values: pd.DataFrame,
     *,
     top_k: int = 5,
+    variant: str = "magnitude",
 ) -> pd.DataFrame:
     rows: list[dict[str, float]] = []
     for col in shap_values.columns:
-        shap_vec = shap_values[col].abs()
-        pfi_vec = pfi_values[col].abs()
+        shap_vec = shap_values[col].abs() if variant == "magnitude" else shap_values[col]
+        pfi_vec = pfi_values[col].abs() if variant == "magnitude" else pfi_values[col]
+        overlap_shap = shap_values[col].abs() if variant == "directional" else shap_vec
+        overlap_pfi = pfi_values[col].abs() if variant == "directional" else pfi_vec
         corr = shap_vec.corr(pfi_vec, method="spearman")
         rows.append(
             {
                 "spearman": float(corr) if corr is not None else float("nan"),
-                "topk_overlap": _topk_overlap(shap_vec, pfi_vec, top_k),
+                "topk_overlap": _topk_overlap(overlap_shap, overlap_pfi, top_k),
                 "cosine": _cosine_similarity(shap_vec, pfi_vec),
             }
         )
@@ -251,8 +260,8 @@ def generate_report(results_dir: Path) -> None:
     results_path = results_dir / "results.csv"
     metadata_path = results_dir / "run_metadata.json"
 
-    stability = pd.read_csv(stability_path)
-    agreement = pd.read_csv(agreement_path)
+    stability = pd.read_csv(stability_path) if stability_path.exists() else pd.DataFrame()
+    agreement = pd.read_csv(agreement_path) if agreement_path.exists() else pd.DataFrame()
     results = pd.read_csv(results_path)
     if not metadata_path.exists():
         raise FileNotFoundError(
@@ -264,6 +273,20 @@ def generate_report(results_dir: Path) -> None:
             "run_metadata.json missing 'agreement_top_k'; regenerate run metadata before plotting."
         )
     top_k = int(metadata["agreement_top_k"])
+    ratios = sorted(results["class_ratio"].unique())
+
+    if "variant" not in stability.columns:
+        from shap_stability.metrics.stability import write_stability_summary
+
+        stability = write_stability_summary(
+            results, ratios=ratios, output_path=stability_path, top_k=top_k
+        )
+    if "variant" not in agreement.columns:
+        from shap_stability.metrics.agreement import write_agreement_summary
+
+        agreement = write_agreement_summary(
+            results, ratios=ratios, output_path=agreement_path, top_k=top_k
+        )
 
     plots_dir = results_dir / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)
@@ -272,137 +295,175 @@ def generate_report(results_dir: Path) -> None:
     ratio_label = "Target positive class ratio (train resampling, fraction)"
     fold_note = "Box=IQR, line=median, dot=mean"
     ratio_ticks = [float(ratio) for ratio in ratios]
+    stability_variants = (
+        sorted(stability["variant"].unique())
+        if "variant" in stability.columns
+        else ["magnitude"]
+    )
+    agreement_variants = (
+        sorted(agreement["variant"].unique())
+        if "variant" in agreement.columns
+        else ["magnitude"]
+    )
 
     rank_frames = []
     mag_frames = []
     for method in stability["method"].unique():
-        subset = stability[stability["method"] == method].sort_values("ratio")
-        rank_rows = []
-        n_folds = None
-        for ratio in ratios:
-            values = _collect_importances(results, prefix=f"{method}_", ratio=ratio)
-            n_folds = values.shape[1]
-            per_fold = _mean_rank_corr_per_fold(values)
-            rank_rows.extend(
-                {"ratio": ratio, "mean_rank_corr": value} for value in per_fold
+        for variant in stability_variants:
+            if "variant" in stability.columns:
+                subset = stability[
+                    (stability["method"] == method)
+                    & (stability["variant"] == variant)
+                ].sort_values("ratio")
+            else:
+                subset = stability[stability["method"] == method].sort_values("ratio")
+            rank_rows = []
+            n_folds = None
+            for ratio in ratios:
+                values = _collect_importances(results, prefix=f"{method}_", ratio=ratio)
+                variant_values = _apply_variant(values, variant)
+                n_folds = values.shape[1]
+                per_fold = _mean_rank_corr_per_fold(variant_values)
+                rank_rows.extend(
+                    {"ratio": ratio, "mean_rank_corr": value} for value in per_fold
+                )
+            rank_frame = pd.DataFrame(rank_rows)
+            rank_frame["method"] = method
+            rank_frame["variant"] = variant
+            rank_frames.append(rank_frame)
+            variant_label = "Magnitude" if variant == "magnitude" else "Directional"
+            suffix = "" if variant == "magnitude" else f"_{variant}"
+            _plot_distribution(
+                rank_frame,
+                x="ratio",
+                y="mean_rank_corr",
+                mean_frame=subset,
+                mean_x="ratio",
+                mean_y="mean_rank_corr",
+                title=f"{method.upper()} rank stability ({variant_label}, n={n_folds})",
+                x_label=ratio_label,
+                y_label="Fold-to-fold rank correlation (Spearman)",
+                note=fold_note,
+                reference_lines=None,
+                output=plots_dir / f"{method}_rank_stability{suffix}.png",
             )
-        rank_frame = pd.DataFrame(rank_rows)
-        rank_frame["method"] = method
-        rank_frames.append(rank_frame)
-        _plot_distribution(
-            rank_frame,
-            x="ratio",
-            y="mean_rank_corr",
-            mean_frame=subset,
-            mean_x="ratio",
-            mean_y="mean_rank_corr",
-            title=f"{method.upper()} rank stability (fold variability, n={n_folds})",
-            x_label=ratio_label,
-            y_label="Fold-to-fold rank correlation (Spearman)",
-            note=fold_note,
-            reference_lines=None,
-            output=plots_dir / f"{method}_rank_stability.png",
-        )
-        mag_rows = []
-        for ratio in ratios:
-            values = _collect_importances(results, prefix=f"{method}_", ratio=ratio)
-            magnitude_values = values.abs() if method == "pfi" else values
-            stats = _bootstrap_magnitude_stats(magnitude_values)
-            mag_rows.append(
-                {
-                    "ratio": ratio,
-                    "sd_magnitude_var": stats["sd"],
-                    "median_magnitude_var": stats["median"],
-                    "iqr_magnitude_var": stats["iqr"],
-                }
+            mag_rows = []
+            for ratio in ratios:
+                values = _collect_importances(results, prefix=f"{method}_", ratio=ratio)
+                magnitude_values = _apply_variant(values, variant)
+                stats = _bootstrap_magnitude_stats(magnitude_values)
+                mag_rows.append(
+                    {
+                        "ratio": ratio,
+                        "sd_magnitude_var": stats["sd"],
+                        "median_magnitude_var": stats["median"],
+                        "iqr_magnitude_var": stats["iqr"],
+                    }
+                )
+            mag_frame = pd.DataFrame(mag_rows)
+            mag_frame["method"] = method
+            mag_frame["variant"] = variant
+            mag_frames.append(mag_frame)
+            _plot_metric_with_error(
+                subset,
+                x="ratio",
+                y="mean_magnitude_var",
+                yerr=mag_frame.sort_values("ratio")["sd_magnitude_var"],
+                title=f"{method.upper()} magnitude variance ({variant_label})",
+                x_label=ratio_label,
+                y_label="Mean magnitude variance",
+                note="Point = mean over folds; error bars = bootstrap SD (pooled across folds)",
+                reference_lines=None,
+                use_scientific=True,
+                x_ticks=ratio_ticks,
+                output=plots_dir / f"{method}_magnitude_variance{suffix}.png",
             )
-        mag_frame = pd.DataFrame(mag_rows)
-        mag_frame["method"] = method
-        mag_frames.append(mag_frame)
-        _plot_metric_with_error(
-            subset,
-            x="ratio",
-            y="mean_magnitude_var",
-            yerr=mag_frame.sort_values("ratio")["sd_magnitude_var"],
-            title=f"{method.upper()} magnitude variance (mean ± bootstrap SD)",
-            x_label=ratio_label,
-            y_label="Mean magnitude variance",
-            note="Point = mean over folds; error bars = bootstrap SD (pooled across folds)",
-            reference_lines=None,
-            use_scientific=True,
-            x_ticks=ratio_ticks,
-            output=plots_dir / f"{method}_magnitude_variance.png",
-        )
 
-    agreement_sorted = agreement.sort_values("ratio")
     agreement_rows = []
     n_folds = None
-    for ratio in ratios:
-        shap_values = _collect_importances(results, prefix="shap_", ratio=ratio)
-        pfi_values = _collect_importances(results, prefix="pfi_", ratio=ratio)
-        n_folds = shap_values.shape[1]
-        per_fold = _agreement_per_fold(shap_values, pfi_values, top_k=top_k)
-        per_fold["ratio"] = ratio
-        agreement_rows.append(per_fold)
-    agreement_frame = pd.concat(agreement_rows, ignore_index=True)
-    _plot_distribution(
-        agreement_frame,
-        x="ratio",
-        y="spearman",
-        mean_frame=agreement_sorted,
-        mean_x="ratio",
-        mean_y="mean_spearman",
-        title=f"SHAP vs PFI Spearman agreement (fold variability, n={n_folds})",
-        x_label=ratio_label,
-        y_label="Spearman correlation",
-        note=fold_note,
-        reference_lines=None,
-        output=plots_dir / "agreement_spearman.png",
-    )
-    _plot_distribution(
-        agreement_frame,
-        x="ratio",
-        y="topk_overlap",
-        mean_frame=agreement_sorted,
-        mean_x="ratio",
-        mean_y="mean_topk_overlap",
-        title=f"SHAP vs PFI top-k overlap (k={top_k}, n={n_folds})",
-        x_label=ratio_label,
-        y_label="Top-k overlap (|intersection|/k)",
-        note=fold_note,
-        reference_lines=None,
-        output=plots_dir / "agreement_topk_overlap.png",
-    )
-    _plot_distribution(
-        agreement_frame,
-        x="ratio",
-        y="cosine",
-        mean_frame=agreement_sorted,
-        mean_x="ratio",
-        mean_y="mean_cosine",
-        title=f"SHAP vs PFI cosine agreement (fold variability, n={n_folds})",
-        x_label=ratio_label,
-        y_label="Cosine similarity",
-        note=fold_note,
-        reference_lines=None,
-        output=plots_dir / "agreement_cosine.png",
-    )
+    for variant in agreement_variants:
+        if "variant" in agreement.columns:
+            agreement_sorted = agreement[agreement["variant"] == variant].sort_values("ratio")
+        else:
+            agreement_sorted = agreement.sort_values("ratio")
+        variant_rows = []
+        for ratio in ratios:
+            shap_values = _collect_importances(results, prefix="shap_", ratio=ratio)
+            pfi_values = _collect_importances(results, prefix="pfi_", ratio=ratio)
+            n_folds = shap_values.shape[1]
+            per_fold = _agreement_per_fold(
+                shap_values, pfi_values, top_k=top_k, variant=variant
+            )
+            per_fold["ratio"] = ratio
+            per_fold["variant"] = variant
+            variant_rows.append(per_fold)
+        agreement_frame = pd.concat(variant_rows, ignore_index=True)
+        agreement_rows.append(agreement_frame)
+        variant_label = "Magnitude" if variant == "magnitude" else "Directional"
+        suffix = "" if variant == "magnitude" else f"_{variant}"
+        _plot_distribution(
+            agreement_frame,
+            x="ratio",
+            y="spearman",
+            mean_frame=agreement_sorted,
+            mean_x="ratio",
+            mean_y="mean_spearman",
+            title=f"SHAP vs PFI Spearman agreement ({variant_label}, n={n_folds})",
+            x_label=ratio_label,
+            y_label="Spearman correlation",
+            note=fold_note,
+            reference_lines=None,
+            output=plots_dir / f"agreement_spearman{suffix}.png",
+        )
+        _plot_distribution(
+            agreement_frame,
+            x="ratio",
+            y="topk_overlap",
+            mean_frame=agreement_sorted,
+            mean_x="ratio",
+            mean_y="mean_topk_overlap",
+            title=f"SHAP vs PFI top-k overlap ({variant_label}, k={top_k}, n={n_folds})",
+            x_label=ratio_label,
+            y_label="Top-k overlap (|intersection|/k)",
+            note=fold_note,
+            reference_lines=None,
+            output=plots_dir / f"agreement_topk_overlap{suffix}.png",
+        )
+        _plot_distribution(
+            agreement_frame,
+            x="ratio",
+            y="cosine",
+            mean_frame=agreement_sorted,
+            mean_x="ratio",
+            mean_y="mean_cosine",
+            title=f"SHAP vs PFI cosine agreement ({variant_label}, n={n_folds})",
+            x_label=ratio_label,
+            y_label="Cosine similarity",
+            note=fold_note,
+            reference_lines=None,
+            output=plots_dir / f"agreement_cosine{suffix}.png",
+        )
 
     stability_table = stability.copy()
     rank_all = pd.concat(rank_frames, ignore_index=True)
     mag_all = pd.concat(mag_frames, ignore_index=True)
     rank_dispersion = (
-        rank_all.groupby(["ratio", "method"])["mean_rank_corr"]
+        rank_all.groupby(["ratio", "method", "variant"])["mean_rank_corr"]
         .agg(median_rank_corr="median", iqr_rank_corr=lambda s: s.quantile(0.75) - s.quantile(0.25))
         .reset_index()
     )
-    stability_table = stability_table.merge(rank_dispersion, on=["ratio", "method"], how="left")
-    stability_table = stability_table.merge(mag_all, on=["ratio", "method"], how="left")
+    stability_table = stability_table.merge(
+        rank_dispersion, on=["ratio", "method", "variant"], how="left"
+    )
+    stability_table = stability_table.merge(
+        mag_all, on=["ratio", "method", "variant"], how="left"
+    )
     stability_table.to_csv(results_dir / "stability_table.csv", index=False)
 
     agreement_table = agreement.copy()
+    agreement_all = pd.concat(agreement_rows, ignore_index=True)
     agreement_dispersion = (
-        agreement_frame.groupby("ratio")
+        agreement_all.groupby(["ratio", "variant"])
         .agg(
             median_spearman=("spearman", "median"),
             iqr_spearman=("spearman", lambda s: s.quantile(0.75) - s.quantile(0.25)),
@@ -413,8 +474,325 @@ def generate_report(results_dir: Path) -> None:
         )
         .reset_index()
     )
-    agreement_table = agreement_table.merge(agreement_dispersion, on="ratio", how="left")
+    agreement_table = agreement_table.merge(
+        agreement_dispersion, on=["ratio", "variant"], how="left"
+    )
     agreement_table.to_csv(results_dir / "agreement_table.csv", index=False)
+
+    metric_cols = [col for col in results.columns if col.startswith("metric_")]
+    key_cols = [col for col in ("fold_id", "repeat_id", "seed", "model_name") if col in results.columns]
+    paired_diffs = _paired_ratio_diffs(
+        results, ratios=ratios, metrics=metric_cols, key_cols=key_cols
+    )
+    paired_diffs.to_csv(results_dir / "paired_ratio_diffs.csv", index=False)
+    paired_summary = _summarize_paired_diffs(paired_diffs)
+    paired_summary.to_csv(results_dir / "paired_ratio_table.csv", index=False)
+
+    pfi_std_cols = [col for col in results.columns if col.startswith("pfi_std_")]
+    pfi_uncertainty = _summarize_pfi_uncertainty(results, ratios=ratios, pfi_std_cols=pfi_std_cols)
+    if not pfi_uncertainty.empty:
+        pfi_uncertainty.to_csv(results_dir / "pfi_permutation_uncertainty.csv", index=False)
+
+    summary_path = results_dir / "mvs_results_summary.md"
+    summary_text = _render_summary(
+        results,
+        stability_table=stability_table,
+        agreement_table=agreement_table,
+        paired_table=paired_summary,
+        pfi_uncertainty=pfi_uncertainty,
+        metadata=metadata,
+        results_dir=results_dir,
+        ratios=ratios,
+        top_k=top_k,
+    )
+    summary_path.write_text(summary_text, encoding="utf-8")
+
+
+def _format_ratio_values(
+    frame: pd.DataFrame,
+    *,
+    ratios: list[float],
+    column: str,
+    fmt: str,
+) -> str:
+    values = []
+    for ratio in ratios:
+        value = float(frame.loc[frame["ratio"] == ratio, column].iloc[0])
+        values.append(f"{ratio:g}: {fmt.format(value)}")
+    return ", ".join(values)
+
+
+def _paired_ratio_diffs(
+    results: pd.DataFrame,
+    *,
+    ratios: list[float],
+    metrics: list[str],
+    key_cols: list[str],
+) -> pd.DataFrame:
+    diffs: list[dict[str, float | str]] = []
+    if not metrics or not key_cols:
+        return pd.DataFrame(columns=["ratio_high", "ratio_low", "metric", "diff"])
+    for i, ratio_low in enumerate(ratios):
+        for ratio_high in ratios[i + 1 :]:
+            left = results[results["class_ratio"] == ratio_high][key_cols + metrics]
+            right = results[results["class_ratio"] == ratio_low][key_cols + metrics]
+            merged = left.merge(right, on=key_cols, suffixes=("_high", "_low"))
+            for metric in metrics:
+                diff_series = merged[f"{metric}_high"] - merged[f"{metric}_low"]
+                for value in diff_series.dropna().to_list():
+                    diffs.append(
+                        {
+                            "ratio_high": float(ratio_high),
+                            "ratio_low": float(ratio_low),
+                            "metric": metric,
+                            "diff": float(value),
+                        }
+                    )
+    return pd.DataFrame(diffs)
+
+
+def _summarize_paired_diffs(paired: pd.DataFrame) -> pd.DataFrame:
+    if paired.empty:
+        return pd.DataFrame(
+            columns=["ratio_high", "ratio_low", "metric", "median_diff", "iqr_diff", "n_pairs"]
+        )
+    summary = (
+        paired.groupby(["ratio_high", "ratio_low", "metric"])["diff"]
+        .agg(
+            median_diff="median",
+            iqr_diff=lambda s: s.quantile(0.75) - s.quantile(0.25),
+            n_pairs="count",
+        )
+        .reset_index()
+    )
+    return summary
+
+
+def _format_paired_table(
+    paired: pd.DataFrame,
+    *,
+    ratios: list[float],
+) -> str:
+    if paired.empty:
+        return ""
+    pairs = [(ratios[j], ratios[i]) for i in range(len(ratios)) for j in range(i + 1, len(ratios))]
+    headers = ["Metric"] + [f"{high:g} - {low:g}" for high, low in pairs]
+    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+    for metric in sorted(paired["metric"].unique()):
+        row = [metric.removeprefix("metric_")]
+        for high, low in pairs:
+            subset = paired[
+                (paired["ratio_high"] == float(high))
+                & (paired["ratio_low"] == float(low))
+                & (paired["metric"] == metric)
+            ]
+            if subset.empty:
+                row.append("—")
+                continue
+            median = float(subset["median_diff"].iloc[0])
+            iqr = float(subset["iqr_diff"].iloc[0])
+            row.append(f"{median:.3f} ({iqr:.3f})")
+        lines.append("| " + " | ".join(row) + " |")
+    return "\n".join(lines)
+
+
+def _summarize_pfi_uncertainty(
+    results: pd.DataFrame,
+    *,
+    ratios: list[float],
+    pfi_std_cols: list[str],
+) -> pd.DataFrame:
+    if not pfi_std_cols:
+        return pd.DataFrame(
+            columns=["ratio", "mean_std", "median_std", "iqr_std", "n_folds"]
+        )
+    per_fold = results[pfi_std_cols].mean(axis=1)
+    frame = results[["class_ratio"]].copy()
+    frame["mean_std"] = per_fold
+    summary = (
+        frame.groupby("class_ratio")["mean_std"]
+        .agg(
+            mean_std="mean",
+            median_std="median",
+            iqr_std=lambda s: s.quantile(0.75) - s.quantile(0.25),
+            n_folds="count",
+        )
+        .reset_index()
+        .rename(columns={"class_ratio": "ratio"})
+    )
+    summary = summary[summary["ratio"].isin(ratios)].sort_values("ratio")
+    return summary
+
+
+def _render_summary(
+    results: pd.DataFrame,
+    *,
+    stability_table: pd.DataFrame,
+    agreement_table: pd.DataFrame,
+    paired_table: pd.DataFrame,
+    pfi_uncertainty: pd.DataFrame,
+    metadata: dict,
+    results_dir: Path,
+    ratios: list[float],
+    top_k: int,
+) -> str:
+    run_id = metadata.get("run_id", results_dir.name)
+    model_names = sorted(set(results.get("model_name", [])))
+    model_label = (
+        "XGBoost + TreeSHAP" if model_names == ["xgboost"] else ", ".join(model_names)
+    )
+    outer_folds = int(metadata.get("outer_folds", 0))
+    outer_repeats = int(metadata.get("outer_repeats", 0))
+    inner_folds = int(metadata.get("inner_folds", 0))
+    pfi_repeats = int(metadata.get("pfi_repeats", 0))
+    grid = metadata.get("param_grid", {})
+    grid_size = 1
+    for values in grid.values():
+        grid_size *= len(values)
+
+    perf = (
+        results.groupby("class_ratio")[["metric_accuracy", "metric_roc_auc"]]
+        .mean()
+        .reset_index()
+    )
+    perf_rows = [
+        f"| {ratio:g} | {acc:.3f} | {auc:.3f} |"
+        for ratio, acc, auc in perf.to_numpy()
+    ]
+    perf_table = "\n".join(
+        ["| Class ratio | Accuracy | ROC AUC |", "| --- | --- | --- |", *perf_rows]
+    )
+
+    variants = (
+        sorted(stability_table["variant"].unique())
+        if "variant" in stability_table.columns
+        else ["magnitude"]
+    )
+    stability_sections = []
+    for variant in variants:
+        variant_label = "Magnitude" if variant == "magnitude" else "Directional"
+        subset = (
+            stability_table[stability_table["variant"] == variant]
+            if "variant" in stability_table.columns
+            else stability_table
+        )
+        shap = subset[subset["method"] == "shap"].sort_values("ratio")
+        pfi = subset[subset["method"] == "pfi"].sort_values("ratio")
+        stability_sections.append(
+            "\n".join(
+                [
+                    f"### {variant_label}",
+                    "",
+                    "**SHAP**",
+                    f"- Rank stability (mean Spearman): {_format_ratio_values(shap, ratios=ratios, column='mean_rank_corr', fmt='{:.2f}')}.",
+                    f"- Magnitude variance: {_format_ratio_values(shap, ratios=ratios, column='mean_magnitude_var', fmt='{:.2e}')}.",
+                    "",
+                    "**PFI**",
+                    f"- Rank stability (mean Spearman): {_format_ratio_values(pfi, ratios=ratios, column='mean_rank_corr', fmt='{:.2f}')}.",
+                    f"- Magnitude variance: {_format_ratio_values(pfi, ratios=ratios, column='mean_magnitude_var', fmt='{:.2e}')}.",
+                ]
+            )
+        )
+
+    agreement_sections = []
+    for variant in variants:
+        variant_label = "Magnitude" if variant == "magnitude" else "Directional"
+        subset = (
+            agreement_table[agreement_table["variant"] == variant]
+            if "variant" in agreement_table.columns
+            else agreement_table
+        )
+        agreement_sections.append(
+            "\n".join(
+                [
+                    f"### {variant_label}",
+                    f"- Spearman agreement: {_format_ratio_values(subset, ratios=ratios, column='mean_spearman', fmt='{:.2f}')}.",
+                    f"- Top-k overlap: {_format_ratio_values(subset, ratios=ratios, column='mean_topk_overlap', fmt='{:.2f}')}.",
+                    f"- Cosine similarity: {_format_ratio_values(subset, ratios=ratios, column='mean_cosine', fmt='{:.2f}')}.",
+                ]
+            )
+        )
+
+    paired_section = ""
+    paired_table_md = _format_paired_table(paired_table, ratios=ratios)
+    if paired_table_md:
+        paired_section = "\n".join(
+            [
+                "## Paired ratio differences (outer-fold paired)",
+                "",
+                "Median difference with IQR in parentheses; positive values mean higher metric at higher ratio.",
+                "",
+                paired_table_md,
+                "",
+            ]
+        )
+
+    pfi_uncertainty_section = ""
+    if not pfi_uncertainty.empty:
+        values = _format_ratio_values(
+            pfi_uncertainty, ratios=ratios, column="mean_std", fmt="{:.3e}"
+        )
+        pfi_uncertainty_section = "\n".join(
+            [
+                "## Within-fold PFI permutation uncertainty",
+                "",
+                f"Mean per-feature permutation std by ratio: {values}.",
+                "",
+            ]
+        )
+
+    notes = "\n".join(
+        [
+            "## Notes / limitations",
+            "- Rank-stability and agreement plots show fold-level distributions; tables include mean plus median/IQR summaries.",
+            "- Magnitude-variance plots show mean with bootstrap SD across folds (dispersion, not inferential CIs).",
+            "- Directional variant preserves sign for correlation/cosine metrics; top-k overlap uses magnitudes to track important-feature membership.",
+            f"- Agreement/stability top-k uses k={top_k} from run metadata.",
+            "- SHAP importance = mean absolute SHAP value over test samples; PFI importance = baseline metric − permuted metric (mean decrease).",
+        ]
+    )
+
+    return "\n".join(
+        [
+            "# MVS results summary",
+            "",
+            f"Run ID: `{run_id}`",
+            f"Data source: `{results_dir.as_posix()}/`",
+            "",
+            "## Setup",
+            "",
+            "- Dataset: Statlog German Credit",
+            f"- Model: {model_label}",
+            f"- Outer CV: {outer_folds} folds × {outer_repeats} repeats ({outer_folds * outer_repeats} folds total)",
+            f"- Inner CV: {inner_folds} folds with {grid_size}-config grid",
+            "- Train-only resampling ratios: " + ", ".join(str(ratio) for ratio in ratios),
+            "- Importance methods: mean(|SHAP|) and PFI",
+            f"- PFI repeats: {pfi_repeats} per fold",
+            "",
+            "## Performance (mean across folds)",
+            "",
+            perf_table,
+            "",
+            "## Stability (within-method)",
+            "",
+            "\n\n".join(stability_sections),
+            "",
+            "## Agreement (SHAP vs PFI)",
+            "",
+            "\n\n".join(agreement_sections),
+            "",
+            paired_section,
+            pfi_uncertainty_section,
+            notes,
+            "",
+            "## Files generated",
+            "",
+            "- `results.csv`, `stability_summary.csv`, `agreement_summary.csv`",
+            "- `stability_table.csv`, `agreement_table.csv`",
+            "- plots under `results/.../plots/`",
+            "",
+        ]
+    )
 
 
 if __name__ == "__main__":

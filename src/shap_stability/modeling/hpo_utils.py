@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -40,6 +40,10 @@ def _evaluate_params(
     metric_name: str,
     inner_folds: int,
     seed: int,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
 ) -> float:
     splitter = StratifiedKFold(n_splits=inner_folds, shuffle=True, random_state=seed)
     scores: list[float] = []
@@ -48,8 +52,12 @@ def _evaluate_params(
     for fold_id, (train_idx, test_idx) in enumerate(splitter.split(X, y)):
         X_train = X.iloc[train_idx]
         y_train = y.iloc[train_idx]
+        if resample_fn is not None:
+            X_train, y_train = resample_fn(X_train, y_train, seed + fold_id)
         X_test = X.iloc[test_idx]
         y_test = y.iloc[test_idx]
+        if preprocess_fn is not None:
+            X_train, X_test = preprocess_fn(X_train, X_test)
 
         model_result = train_xgb_classifier(
             X_train,
@@ -134,6 +142,8 @@ def select_best_params(
             metric_name=metric_name,
             inner_folds=inner_folds,
             seed=seed,
+            resample_fn=resample_fn,
+            preprocess_fn=preprocess_fn,
         )
 
         if best_score is None:
@@ -182,8 +192,13 @@ def tune_and_train(
         param_space=param_space,
     )
 
+    if preprocess_fn is not None:
+        X_train, _ = preprocess_fn(X, X)
+    else:
+        X_train = X
+
     model_result = train_xgb_classifier(
-        X,
+        X_train,
         y,
         params=best_params,
         random_state=seed,

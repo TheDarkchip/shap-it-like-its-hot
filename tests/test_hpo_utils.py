@@ -74,3 +74,49 @@ def test_run_inner_hpo_for_outer_folds_iterates() -> None:
     for result in results:
         assert result.best_params["learning_rate"] == 0.1
         assert hasattr(result.model, "predict_proba")
+
+
+def test_select_best_params_calls_resample_fn() -> None:
+    X, y = _toy_data(30)
+    calls: list[int] = []
+
+    def _resample(X_inner: pd.DataFrame, y_inner: pd.Series, seed: int) -> tuple[pd.DataFrame, pd.Series]:
+        calls.append(seed)
+        return X_inner, y_inner
+
+    select_best_params(
+        X,
+        y,
+        param_grid={"learning_rate": [0.1]},
+        metric_name="roc_auc",
+        inner_folds=2,
+        seed=11,
+        base_params={"n_estimators": 5, "max_depth": 2},
+        resample_fn=_resample,
+    )
+
+    assert len(calls) == 2
+
+
+def test_select_best_params_calls_preprocess_fn() -> None:
+    X, y = _toy_data(30)
+    calls: list[int] = []
+
+    def _preprocess(
+        X_train: pd.DataFrame, X_test: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        calls.append(len(X_train))
+        return X_train.assign(bias=1.0), X_test.assign(bias=1.0)
+
+    select_best_params(
+        X,
+        y,
+        param_grid={"learning_rate": [0.1]},
+        metric_name="roc_auc",
+        inner_folds=2,
+        seed=11,
+        base_params={"n_estimators": 5, "max_depth": 2},
+        preprocess_fn=_preprocess,
+    )
+
+    assert len(calls) == 2

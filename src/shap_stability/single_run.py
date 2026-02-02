@@ -19,7 +19,7 @@ from shap_stability.experiment_utils import (
     generate_run_id,
     set_global_seed,
 )
-from shap_stability.data import load_german_credit
+from shap_stability.data import load_german_credit, one_hot_encode_train_test
 from shap_stability.metrics.metrics_utils import parse_metrics_config
 from shap_stability.explain.pfi_utils import compute_pfi_importance
 from shap_stability.resampling import resample_train_fold
@@ -33,12 +33,6 @@ class RunArtifacts:
     results_path: Path
     metadata_path: Path
     log_path: Path
-
-
-def _prepare_features(X: pd.DataFrame) -> pd.DataFrame:
-    frame = pd.DataFrame(X).copy()
-    encoded = pd.get_dummies(frame, drop_first=False)
-    return encoded.reindex(sorted(encoded.columns), axis=1)
 
 
 def _compute_metrics(y_true: pd.Series, y_proba: np.ndarray) -> dict[str, float]:
@@ -111,7 +105,7 @@ def run_single_experiment(
     else:
         X_raw, y = data
 
-    X = _prepare_features(X_raw)
+    X = X_raw.copy()
 
     outer_folds = int(cfg["cv"].get("outer_folds", 3))
     outer_repeats = int(cfg["cv"].get("outer_repeats", 1))
@@ -142,14 +136,14 @@ def run_single_experiment(
         outer_repeats=outer_repeats,
         seed=seed,
     ):
-        X_train = X.iloc[train_idx]
+        X_train_raw = X.iloc[train_idx]
         y_train = y.iloc[train_idx]
-        X_test = X.iloc[test_idx]
+        X_test_raw = X.iloc[test_idx]
         y_test = y.iloc[test_idx]
 
         for ratio in ratios:
             resampled = resample_train_fold(
-                X_train,
+                X_train_raw,
                 y_train,
                 target_positive_ratio=float(ratio),
                 random_state=repeat_seed,
@@ -157,18 +151,21 @@ def run_single_experiment(
             achieved_ratio = resampled.positive_count / (
                 resampled.positive_count + resampled.negative_count
             )
+            X_train_enc, X_test_enc = one_hot_encode_train_test(
+                resampled.X, X_test_raw
+            )
             train_result = train_xgb_classifier(
-                resampled.X,
+                X_train_enc,
                 resampled.y,
                 params=model_params,
                 random_state=repeat_seed,
             )
-            proba = predict_proba(train_result.model, X_test)
+            proba = predict_proba(train_result.model, X_test_enc)
             metrics = _compute_metrics(y_test, proba)
-            shap_result = compute_tree_shap(train_result.model, X_test)
-            pfi_importance = compute_pfi_importance(
+            shap_result = compute_tree_shap(train_result.model, X_test_enc)
+            pfi_result = compute_pfi_importance(
                 train_result.model,
-                X_test,
+                X_test_enc,
                 y_test,
                 metric_name=metrics_cfg.primary,
                 n_repeats=int(cfg["metrics"].get("pfi_repeats", 5)),
@@ -183,7 +180,8 @@ def run_single_experiment(
                 class_ratio=achieved_ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
-                pfi_importance=pfi_importance.to_dict(),
+                pfi_importance=pfi_result.mean.to_dict(),
+                pfi_importance_std=pfi_result.std.to_dict(),
             )
             append_record_csv(results_path, record)
 
