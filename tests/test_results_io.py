@@ -23,12 +23,13 @@ def _record() -> ResultRecord:
         metrics={"roc_auc": 0.71},
         shap_importance={"f1": 0.2, "f2": 0.1},
         pfi_importance={"f1": 0.15, "f2": 0.05},
+        pfi_importance_std={"f1": 0.02, "f2": 0.01},
     )
 
 
 def test_record_to_frame_columns() -> None:
     frame = record_to_frame(_record())
-    assert frame.shape == (1, 10)
+    assert frame.shape == (1, 12)
     assert set(frame.columns) == {
         "fold_id",
         "repeat_id",
@@ -40,6 +41,8 @@ def test_record_to_frame_columns() -> None:
         "shap_f2",
         "pfi_f1",
         "pfi_f2",
+        "pfi_std_f1",
+        "pfi_std_f2",
     }
 
 

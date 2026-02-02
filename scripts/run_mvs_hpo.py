@@ -136,7 +136,7 @@ def main() -> None:
             logger.info("Best HPO score=%.4f", hpo.best_score)
             proba = predict_proba(hpo.model, X_test)
             shap_result = compute_tree_shap(hpo.model, X_test)
-            pfi_importance = compute_pfi_importance(
+            pfi_result = compute_pfi_importance(
                 hpo.model,
                 X_test,
                 y_test,
@@ -161,7 +161,8 @@ def main() -> None:
                 class_ratio=ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
-                pfi_importance=pfi_importance.to_dict(),
+                pfi_importance=pfi_result.mean.to_dict(),
+                pfi_importance_std=pfi_result.std.to_dict(),
             )
             append_record_csv(results_path, record)
 

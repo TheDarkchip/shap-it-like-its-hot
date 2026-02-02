@@ -120,6 +120,24 @@ def test_render_summary_contains_core_sections(tmp_path: Path) -> None:
         stability_table=stability,
         agreement_table=agreement,
         paired_table=paired,
+        pfi_uncertainty=pd.DataFrame(
+            [
+                {
+                    "ratio": 0.1,
+                    "mean_std": 0.01,
+                    "median_std": 0.01,
+                    "iqr_std": 0.0,
+                    "n_folds": 2,
+                },
+                {
+                    "ratio": 0.3,
+                    "mean_std": 0.02,
+                    "median_std": 0.02,
+                    "iqr_std": 0.0,
+                    "n_folds": 2,
+                },
+            ]
+        ),
         metadata=metadata,
         results_dir=tmp_path,
         ratios=[0.1, 0.3],

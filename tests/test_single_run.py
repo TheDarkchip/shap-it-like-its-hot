@@ -50,6 +50,8 @@ def test_run_single_experiment_writes_artifacts(tmp_path: Path) -> None:
     assert "shap_feature_b" in results.columns
     assert "pfi_feature_a" in results.columns
     assert "pfi_feature_b" in results.columns
+    assert "pfi_std_feature_a" in results.columns
+    assert "pfi_std_feature_b" in results.columns
     assert len(results) == 2  # 1 repeat x 2 folds x 1 ratio
 
 

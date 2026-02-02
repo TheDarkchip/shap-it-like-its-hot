@@ -166,7 +166,7 @@ def run_single_experiment(
             proba = predict_proba(train_result.model, X_test)
             metrics = _compute_metrics(y_test, proba)
             shap_result = compute_tree_shap(train_result.model, X_test)
-            pfi_importance = compute_pfi_importance(
+            pfi_result = compute_pfi_importance(
                 train_result.model,
                 X_test,
                 y_test,
@@ -183,7 +183,8 @@ def run_single_experiment(
                 class_ratio=achieved_ratio,
                 metrics=metrics,
                 shap_importance=shap_result.global_importance.to_dict(),
-                pfi_importance=pfi_importance.to_dict(),
+                pfi_importance=pfi_result.mean.to_dict(),
+                pfi_importance_std=pfi_result.std.to_dict(),
             )
             append_record_csv(results_path, record)
 

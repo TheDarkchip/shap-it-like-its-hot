@@ -488,12 +488,18 @@ def generate_report(results_dir: Path) -> None:
     paired_summary = _summarize_paired_diffs(paired_diffs)
     paired_summary.to_csv(results_dir / "paired_ratio_table.csv", index=False)
 
+    pfi_std_cols = [col for col in results.columns if col.startswith("pfi_std_")]
+    pfi_uncertainty = _summarize_pfi_uncertainty(results, ratios=ratios, pfi_std_cols=pfi_std_cols)
+    if not pfi_uncertainty.empty:
+        pfi_uncertainty.to_csv(results_dir / "pfi_permutation_uncertainty.csv", index=False)
+
     summary_path = results_dir / "mvs_results_summary.md"
     summary_text = _render_summary(
         results,
         stability_table=stability_table,
         agreement_table=agreement_table,
         paired_table=paired_summary,
+        pfi_uncertainty=pfi_uncertainty,
         metadata=metadata,
         results_dir=results_dir,
         ratios=ratios,
@@ -590,12 +596,41 @@ def _format_paired_table(
     return "\n".join(lines)
 
 
+def _summarize_pfi_uncertainty(
+    results: pd.DataFrame,
+    *,
+    ratios: list[float],
+    pfi_std_cols: list[str],
+) -> pd.DataFrame:
+    if not pfi_std_cols:
+        return pd.DataFrame(
+            columns=["ratio", "mean_std", "median_std", "iqr_std", "n_folds"]
+        )
+    per_fold = results[pfi_std_cols].mean(axis=1)
+    frame = results[["class_ratio"]].copy()
+    frame["mean_std"] = per_fold
+    summary = (
+        frame.groupby("class_ratio")["mean_std"]
+        .agg(
+            mean_std="mean",
+            median_std="median",
+            iqr_std=lambda s: s.quantile(0.75) - s.quantile(0.25),
+            n_folds="count",
+        )
+        .reset_index()
+        .rename(columns={"class_ratio": "ratio"})
+    )
+    summary = summary[summary["ratio"].isin(ratios)].sort_values("ratio")
+    return summary
+
+
 def _render_summary(
     results: pd.DataFrame,
     *,
     stability_table: pd.DataFrame,
     agreement_table: pd.DataFrame,
     paired_table: pd.DataFrame,
+    pfi_uncertainty: pd.DataFrame,
     metadata: dict,
     results_dir: Path,
     ratios: list[float],
@@ -692,6 +727,20 @@ def _render_summary(
             ]
         )
 
+    pfi_uncertainty_section = ""
+    if not pfi_uncertainty.empty:
+        values = _format_ratio_values(
+            pfi_uncertainty, ratios=ratios, column="mean_std", fmt="{:.3e}"
+        )
+        pfi_uncertainty_section = "\n".join(
+            [
+                "## Within-fold PFI permutation uncertainty",
+                "",
+                f"Mean per-feature permutation std by ratio: {values}.",
+                "",
+            ]
+        )
+
     notes = "\n".join(
         [
             "## Notes / limitations",
@@ -732,6 +781,7 @@ def _render_summary(
             "\n\n".join(agreement_sections),
             "",
             paired_section,
+            pfi_uncertainty_section,
             notes,
             "",
             "## Files generated",
