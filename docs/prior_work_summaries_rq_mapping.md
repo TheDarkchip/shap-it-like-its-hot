@@ -1,6 +1,6 @@
 # Prior work summaries + RQ coverage map (credit scoring: imbalance, SHAP, PFI)
 
-Generated: 2026-02-01
+Last updated: 2026-02-01
 
 This note provides short, per-source summaries and a quick mapping to the repository research questions (RQ1–RQ3). RQ wording matches `docs/prior_work_check.md` and `ROADMAP.md`.
 

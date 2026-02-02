@@ -2,7 +2,7 @@
 
 This repository implements a compact, reproducible case study on the Statlog German Credit dataset to understand when global SHAP feature importances are stable and how they compare to permutation feature importance (PFI), especially under class imbalance and (optionally) feature correlation.
 
-Last updated: 2026-01-21
+Last updated: 2026-02-01
 
 ## At a glance
 
@@ -12,6 +12,7 @@ Last updated: 2026-01-21
 - Importance methods: mean(|SHAP|) and PFI.
 - Evaluation: repeated nested cross-validation with inner HPO and untouched outer test folds.
 - Outputs: fold-level importance vectors, stability and agreement metrics, and uncertainty summaries.
+- Selected bounded novelty stretches (post-MVS): PFI metric sensitivity + signed SHAP directionality for top features.
 
 ## Table of contents
 
@@ -30,13 +31,15 @@ Last updated: 2026-01-21
 
 Primary objective: quantify (a) stability of global importances within a method and (b) agreement between SHAP and PFI, under controlled changes in training imbalance on a small credit dataset.
 
+Scope is now locked for the minimum viable study (MVS). Any expansions (extra datasets, many more explainers, heavy ablations) are explicitly treated as optional stretch work.
+
 Default plan (minimum viable study, MVS):
 - Dataset: Statlog German Credit (fixed, single dataset).
 - Primary model: XGBoost tree model + TreeSHAP.
 - Imbalance settings: 10%, 30%, 50% positives in the training fold (test fold untouched).
 - Feature importance methods:
   - global SHAP via mean absolute SHAP
-  - PFI via permutation importance
+  - PFI via permutation importance (multiple repeats)
 - Evaluation: nested CV with inner HPO and repeated outer splits for uncertainty.
 
 Non-goals (out of scope unless explicitly requested):
@@ -44,12 +47,6 @@ Non-goals (out of scope unless explicitly requested):
 - many explainability methods beyond SHAP and PFI
 - exhaustive HPO or large neural models
 - causal claims about true feature importance
-
-Stretch goals (optional; only after MVS is complete):
-- slightly richer SMAC HPO budget
-- small correlated-feature duplication stress test
-- linear-model baseline (robustness)
-- one bounded novelty stretch from Section 6
 
 ## 2) Research questions (RQ)
 
@@ -66,13 +63,11 @@ What happens to SHAP and PFI global importances when a few features are duplicat
 
 Before implementing the full experiment grid, the project verifies whether the main questions and experimental setup are already directly answered in closely related papers (especially imbalance vs explanation stability and SHAP/PFI disagreement on German Credit).
 
-Deliverable: `docs/prior_work_check.md` containing:
-- a 1-2 page summary of the most relevant 8-12 sources
-- what each paper answers (and does not answer) relative to RQ1-RQ3
-- final scope decisions (what we keep, drop, or adjust)
-- 3-6 novelty stretch candidates that are not the central focus of the closest-overlap papers
+Deliverables:
+- `docs/prior_work_check.md`: short synthesis, overlap/gap table, and final scope decisions.
+- `docs/prior_work_summaries.md`: per-source summaries plus an explicit mapping to RQ1–RQ3.
 
-Acceptance criterion: after this check, the experiment design is either (a) justified as a replication/extension with clear added value, or (b) narrowed further.
+Acceptance criterion: after this check, the experiment design is justified as a replication/extension with clear added value, and 1–2 bounded novelty stretches are selected (or explicitly deferred).
 
 ## 4) Evaluation protocol (nested CV with repeated outer splits)
 
@@ -94,7 +89,7 @@ Outer loop (repeated stratified K-fold):
 7) Store metrics and metadata (fold id, repeat id, random seed, chosen hyperparameters, runtime).
 
 After all outer folds:
-- Aggregate mean and uncertainty (standard deviation and bootstrap CIs).
+- Aggregate mean and uncertainty (standard deviation and confidence intervals from outer repeats).
 - Compute stability metrics within each method (RQ1).
 - Compute agreement metrics between methods (RQ2).
 
@@ -125,41 +120,33 @@ Agreement between SHAP and PFI (RQ2):
 Interpretability guardrail:
 - Report an importance dispersion summary (entropy or Gini of s_norm or p_norm). When dispersion is low (importances nearly flat), emphasize magnitude metrics and top-k overlap over rank correlation.
 
-Optional metrics (novelty stretches):
-- Signed agreement: sign agreement and signed-rank agreement on top-k using mean signed SHAP.
-- Distributional stability: compare per-feature SHAP distributions across settings (e.g., Wasserstein or KS).
-- Within-fold uncertainty: bootstrap CIs for s_norm and p_norm per fold.
+Optional (selected) reporting add-ons:
+- Signed SHAP: mean signed SHAP for top-k features + sign agreement across folds/settings.
+- PFI metric sensitivity: recompute PFI with alternate scoring metrics and compare stability/agreement.
 
 ## 6) Experiment plan (MVS first, then bounded stretches)
 
-Minimum viable study (default deliverable):
+Minimum viable study (default deliverable; required):
 - Model: XGBoost trees.
 - Class ratios: 10%, 30%, 50% positives in resampled training folds.
 - Evaluation: repeated nested CV with modest HPO budget.
-- Outputs: performance metrics; SHAP and PFI importances per fold; stability and agreement analyses for RQ1-RQ2.
+- Outputs: performance metrics; SHAP and PFI importances per fold; stability and agreement analyses for RQ1–RQ2.
 
-Stretch A - stronger HPO (compute permitting):
-- Use SMAC HPO Facade (more trials) or Random Facade with Sobol sampling.
+Selected bounded novelty stretches (do after MVS; commit):
+- D) PFI metric sensitivity under imbalance:
+  - Recompute PFI using 2–3 metrics (ROC AUC, PR AUC, log-loss) on the same models/splits.
+  - Report how stability (RQ1) and agreement (RQ2) vary with metric choice.
+- F) Directionality / sign agreement (lightweight):
+  - For top-k features, report mean signed SHAP alongside mean(|SHAP|).
+  - Track sign agreement and (optional) signed-rank agreement.
 
-Stretch B - correlated-feature duplication ablation (RQ3, small and contained):
-- Duplicate 3-5 features as near-copies with small Gaussian noise.
-- Rerun MVS for a single ratio (e.g., 30%).
-- Report split vs combined importance and change relative to baseline.
-- Optional add-on: grouped importance for original + duplicate pairs.
+Optional stretches (only if time and the MVS results merit it):
+- A) Stronger HPO budget (compute permitting): SMAC more trials or Sobol sampling.
+- B) Correlated-feature duplication ablation (RQ3 sanity check): duplicate 3–5 features as near-copies and see whether methods split vs concentrate importance; optionally test grouped importances.
+- C) Linear baseline (robustness): add logistic regression or gblinear on the same MVS grid.
 
-Stretch C - linear baseline (robustness):
-- Add logistic regression or gblinear on the same MVS grid if feasible.
-
-Novelty stretch D - PFI metric sensitivity under imbalance (bounded):
-- Recompute PFI using 2-3 metrics (ROC AUC, PR AUC, log-loss).
-- Output how stability and agreement change with metric choice.
-
-Novelty stretch E - within-fold uncertainty (bounded):
-- Bootstrap the test fold to obtain CIs for the global importance vector.
-- Separate within-fold estimator noise from across-fold variability.
-
-Novelty stretch F - direction and distribution (bounded, top features only):
-- For top-k features, compute mean signed SHAP and simple distributional distances.
+Deferred for now (bounded but not committed):
+- E) Within-fold bootstrap CIs for global importance vectors (extra compute; only if needed after initial results).
 
 ## 7) Feedback-session checkpoints
 
@@ -172,13 +159,13 @@ Checkpoint 1 (early, before long runs): scope + protocol sign-off
 Checkpoint 2 (after first results): results sanity check
 - Validate trends and confidence intervals.
 - Confirm agreement metrics are interpreted correctly (especially when importances are flat).
-- Decide whether stretch goals are worthwhile.
+- Decide whether optional stretches are worthwhile.
 
 ## 8) Work packages and acceptance criteria
 
 WP0 - Prior work verification
-- Output: `docs/prior_work_check.md`.
-- Done when: scope and claims are updated based on prior work; 1-2 novelty stretches chosen (or rejected).
+- Outputs: `docs/prior_work_check.md`, `docs/prior_work_summaries.md`.
+- Done when: scope is locked, overlap/gap is documented, and novelty stretches D + F are confirmed as post-MVS add-ons (with others explicitly deferred/optional).
 
 WP1 - Repository scaffolding and data pipeline
 - Implement data loading, preprocessing, and one end-to-end pipeline.
@@ -193,14 +180,12 @@ WP2 - Evaluation harness (nested CV)
 WP3 - MVS experiments
 - Run the full MVS grid and generate plots/tables.
 - Output: `results/` with fold-level outputs and summary artifacts.
-- Done when: summary plots for RQ1-RQ2 are generated.
+- Done when: summary plots for RQ1–RQ2 are generated.
 
-WP4 - Stretch goals (optional)
-- Stretch A: stronger HPO
-- Stretch B: duplication ablation
-- Stretch C: linear baseline
-- Novelty D/E/F: pick at most 1-2
-- Done when: each selected stretch has a short summary and plots.
+WP4 - Stretches (selected + optional)
+- Selected: Novelty D and F.
+- Optional: A/B/C.
+- Done when: each executed stretch has a short summary, plots, and “what changed” notes.
 
 WP5 - Reporting and packaging
 - Write up findings and limitations; include reproducibility notes.
@@ -223,7 +208,7 @@ WP5 - Reporting and packaging
 ## 10) Risks and mitigations
 
 Risk: Too many combinations; runs take longer than expected.
-- Mitigation: lock MVS first; keep HPO budget small; run stretch goals only if MVS is complete.
+- Mitigation: lock MVS first; keep HPO budget small; run optional stretches only if MVS is complete.
 
 Risk: Validation protocol is misunderstood or leaky.
 - Mitigation: WP2 protocol doc + sanity tests; review in checkpoint 1.
@@ -232,7 +217,7 @@ Risk: Rank metrics are noisy when importances are flat.
 - Mitigation: always report magnitude-aware metrics and dispersion.
 
 Risk: Permutation importance variance is high.
-- Mitigation: multiple permutation repeats; report uncertainty across folds; optional within-fold bootstrap.
+- Mitigation: multiple permutation repeats; report uncertainty across folds; optional within-fold bootstrap only if needed.
 
-Risk: Novelty stretches expand scope too much.
-- Mitigation: pick at most 1-2 novelty stretches, each bounded to reuse MVS runs or limited to top-k features.
+Risk: Stretch goals expand scope too much.
+- Mitigation: keep selected stretches bounded (reuse MVS runs), and keep everything else explicitly optional/deferred.
