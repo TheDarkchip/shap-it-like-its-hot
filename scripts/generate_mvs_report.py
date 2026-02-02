@@ -479,15 +479,21 @@ def generate_report(results_dir: Path) -> None:
     )
     agreement_table.to_csv(results_dir / "agreement_table.csv", index=False)
 
-    notes_path = results_dir / "mvs_report_notes.md"
-    notes = [
-        "# MVS Report Notes",
-        "",
+    summary_path = results_dir / "mvs_results_summary.md"
+    notes_block = [
+        "## Notes",
         "- Directional variant preserves sign for correlation/cosine metrics.",
         "- Top-k overlap is magnitude-based in both variants to reflect important-feature membership.",
         f"- Agreement/stability top-k uses k={top_k} from run metadata.",
     ]
-    notes_path.write_text("\n".join(notes) + "\n", encoding="utf-8")
+    if summary_path.exists():
+        summary_text = summary_path.read_text(encoding="utf-8")
+        if "Directional variant preserves sign for correlation/cosine metrics." not in summary_text:
+            summary_text = summary_text.rstrip() + "\n\n" + "\n".join(notes_block) + "\n"
+            summary_path.write_text(summary_text, encoding="utf-8")
+    else:
+        summary_text = "# MVS Results Summary\n\n" + "\n".join(notes_block) + "\n"
+        summary_path.write_text(summary_text, encoding="utf-8")
 
 
 if __name__ == "__main__":
