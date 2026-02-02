@@ -279,7 +279,7 @@ def generate_report(results_dir: Path) -> None:
         from shap_stability.metrics.stability import write_stability_summary
 
         stability = write_stability_summary(
-            results, ratios=ratios, output_path=stability_path
+            results, ratios=ratios, output_path=stability_path, top_k=top_k
         )
     if "variant" not in agreement.columns:
         from shap_stability.metrics.agreement import write_agreement_summary
