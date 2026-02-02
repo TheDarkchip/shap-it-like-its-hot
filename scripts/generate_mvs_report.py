@@ -175,21 +175,30 @@ def _magnitude_variance(values: pd.DataFrame) -> float:
     return float(normalized.var(axis=1, ddof=1).mean())
 
 
-def _bootstrap_magnitude_variance(
+def _bootstrap_magnitude_stats(
     values: pd.DataFrame,
     *,
     n_boot: int = 200,
     seed: int = 0,
-) -> float:
+) -> dict[str, float]:
     if values.shape[1] < 2:
-        return float("nan")
+        return {
+            "sd": float("nan"),
+            "median": float("nan"),
+            "iqr": float("nan"),
+        }
     rng = np.random.default_rng(seed)
     cols = list(values.columns)
     stats = []
     for _ in range(n_boot):
         sampled = rng.choice(cols, size=len(cols), replace=True)
         stats.append(_magnitude_variance(values[sampled]))
-    return float(np.std(stats, ddof=1))
+    series = pd.Series(stats, dtype=float)
+    return {
+        "sd": float(series.std(ddof=1)),
+        "median": float(series.median()),
+        "iqr": float(series.quantile(0.75) - series.quantile(0.25)),
+    }
 
 
 def _topk_overlap(a: pd.Series, b: pd.Series, k: int) -> float:
@@ -264,6 +273,8 @@ def generate_report(results_dir: Path) -> None:
     fold_note = "Box=IQR, line=median, dot=mean"
     ratio_ticks = [float(ratio) for ratio in ratios]
 
+    rank_frames = []
+    mag_frames = []
     for method in stability["method"].unique():
         subset = stability[stability["method"] == method].sort_values("ratio")
         rank_rows = []
@@ -276,6 +287,8 @@ def generate_report(results_dir: Path) -> None:
                 {"ratio": ratio, "mean_rank_corr": value} for value in per_fold
             )
         rank_frame = pd.DataFrame(rank_rows)
+        rank_frame["method"] = method
+        rank_frames.append(rank_frame)
         _plot_distribution(
             rank_frame,
             x="ratio",
@@ -294,13 +307,18 @@ def generate_report(results_dir: Path) -> None:
         for ratio in ratios:
             values = _collect_importances(results, prefix=f"{method}_", ratio=ratio)
             magnitude_values = values.abs() if method == "pfi" else values
+            stats = _bootstrap_magnitude_stats(magnitude_values)
             mag_rows.append(
                 {
                     "ratio": ratio,
-                    "sd_magnitude_var": _bootstrap_magnitude_variance(magnitude_values),
+                    "sd_magnitude_var": stats["sd"],
+                    "median_magnitude_var": stats["median"],
+                    "iqr_magnitude_var": stats["iqr"],
                 }
             )
         mag_frame = pd.DataFrame(mag_rows)
+        mag_frame["method"] = method
+        mag_frames.append(mag_frame)
         _plot_metric_with_error(
             subset,
             x="ratio",
@@ -370,8 +388,33 @@ def generate_report(results_dir: Path) -> None:
         output=plots_dir / "agreement_cosine.png",
     )
 
-    stability.to_csv(results_dir / "stability_table.csv", index=False)
-    agreement.to_csv(results_dir / "agreement_table.csv", index=False)
+    stability_table = stability.copy()
+    rank_all = pd.concat(rank_frames, ignore_index=True)
+    mag_all = pd.concat(mag_frames, ignore_index=True)
+    rank_dispersion = (
+        rank_all.groupby(["ratio", "method"])["mean_rank_corr"]
+        .agg(median_rank_corr="median", iqr_rank_corr=lambda s: s.quantile(0.75) - s.quantile(0.25))
+        .reset_index()
+    )
+    stability_table = stability_table.merge(rank_dispersion, on=["ratio", "method"], how="left")
+    stability_table = stability_table.merge(mag_all, on=["ratio", "method"], how="left")
+    stability_table.to_csv(results_dir / "stability_table.csv", index=False)
+
+    agreement_table = agreement.copy()
+    agreement_dispersion = (
+        agreement_frame.groupby("ratio")
+        .agg(
+            median_spearman=("spearman", "median"),
+            iqr_spearman=("spearman", lambda s: s.quantile(0.75) - s.quantile(0.25)),
+            median_topk_overlap=("topk_overlap", "median"),
+            iqr_topk_overlap=("topk_overlap", lambda s: s.quantile(0.75) - s.quantile(0.25)),
+            median_cosine=("cosine", "median"),
+            iqr_cosine=("cosine", lambda s: s.quantile(0.75) - s.quantile(0.25)),
+        )
+        .reset_index()
+    )
+    agreement_table = agreement_table.merge(agreement_dispersion, on="ratio", how="left")
+    agreement_table.to_csv(results_dir / "agreement_table.csv", index=False)
 
 
 if __name__ == "__main__":
