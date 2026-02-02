@@ -103,9 +103,9 @@ def select_best_params_smac(
         output_directory=outdir,
     )
 
-    if init_n_configs is None:
-        init_n_configs = max(1, int(round(budget * init_max_ratio)))
-    init_n_configs = min(init_n_configs, budget)
+    # Ensure SMAC uses Sobol initial design only: allocate the full budget to it.
+    init_n_configs = budget if init_n_configs is None else min(init_n_configs, budget)
+    init_max_ratio = 1.0
 
     initial_design = SobolInitialDesign(
         scenario,
