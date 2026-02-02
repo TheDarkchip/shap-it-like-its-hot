@@ -63,6 +63,7 @@ def test_dispersion_nan_for_zero_importance() -> None:
             "shap_b": [0.0, 0.0],
         }
     )
+    # Expect runtime warnings from constant-input correlations / NaN means.
     with pytest.warns((RuntimeWarning, UserWarning)):
         summaries = summarize_stability(frame, ratios=[0.1], method="shap")
     assert np.isnan(summaries[0].mean_dispersion)
