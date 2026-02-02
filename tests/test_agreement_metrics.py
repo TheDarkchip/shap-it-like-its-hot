@@ -58,3 +58,19 @@ def test_topk_overlap_caps_at_feature_count() -> None:
     with pytest.warns((UserWarning, RuntimeWarning)):
         summaries = summarize_agreement(frame, ratios=[0.1], top_k=5)
     assert summaries[0].mean_topk_overlap == 1.0
+
+
+def test_topk_overlap_ignores_missing_values() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [0.3, 0.2],
+            "shap_b": [np.nan, np.nan],
+            "pfi_a": [0.3, 0.2],
+            "pfi_b": [0.1, 0.2],
+        }
+    )
+    # Missing values lead to empty corr/cosine lists; warnings are expected.
+    with pytest.warns(RuntimeWarning):
+        summaries = summarize_agreement(frame, ratios=[0.1], top_k=5)
+    assert summaries[0].mean_topk_overlap == 1.0

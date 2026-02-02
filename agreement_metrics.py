@@ -38,9 +38,11 @@ def _load_importance(
 
 
 def _topk_overlap(a: pd.Series, b: pd.Series, k: int) -> float:
-    top_a = set(a.nlargest(k).index)
-    top_b = set(b.nlargest(k).index)
-    denom = min(k, len(a), len(b))
+    a_clean = a.dropna()
+    b_clean = b.dropna()
+    top_a = set(a_clean.nlargest(k).index)
+    top_b = set(b_clean.nlargest(k).index)
+    denom = min(k, len(a_clean), len(b_clean))
     if denom == 0:
         return float("nan")
     return len(top_a.intersection(top_b)) / float(denom)
