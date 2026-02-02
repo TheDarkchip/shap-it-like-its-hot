@@ -33,6 +33,7 @@ def test_summarize_stability_returns_expected_fields() -> None:
     assert summary.n_folds == 3
     assert summary.variant == "magnitude"
     assert np.isfinite(summary.mean_rank_corr)
+    assert 0.0 <= summary.mean_topk_overlap <= 1.0
     assert summary.mean_magnitude_var >= 0
 
 
@@ -82,6 +83,20 @@ def test_pfi_dispersion_uses_absolute_values() -> None:
     )
     summaries = summarize_stability(frame, ratios=[0.1], method="pfi", variant="magnitude")
     assert np.isfinite(summaries[0].mean_dispersion)
+
+
+def test_directional_vs_magnitude_rank_corr_differs() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "pfi_a": [0.2, -0.2],
+            "pfi_b": [0.1, -0.1],
+        }
+    )
+    directional = summarize_stability(frame, ratios=[0.1], method="pfi", variant="directional")
+    magnitude = summarize_stability(frame, ratios=[0.1], method="pfi", variant="magnitude")
+
+    assert directional[0].mean_rank_corr != magnitude[0].mean_rank_corr
 
 
 def test_magnitude_variance_uses_normalized_values() -> None:

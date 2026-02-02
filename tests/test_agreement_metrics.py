@@ -103,3 +103,20 @@ def test_agreement_uses_absolute_values() -> None:
     )
     summaries = summarize_agreement(frame, ratios=[0.1], top_k=1, variant="magnitude")
     assert summaries[0].mean_topk_overlap == 1.0
+
+
+def test_directional_agreement_differs_from_magnitude() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [0.2, 0.2],
+            "shap_b": [0.1, 0.1],
+            "pfi_a": [-0.2, -0.2],
+            "pfi_b": [-0.1, -0.1],
+        }
+    )
+    magnitude = summarize_agreement(frame, ratios=[0.1], top_k=1, variant="magnitude")
+    directional = summarize_agreement(frame, ratios=[0.1], top_k=1, variant="directional")
+
+    assert magnitude[0].mean_topk_overlap == 1.0
+    assert directional[0].mean_topk_overlap == 0.0
