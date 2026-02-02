@@ -1,3 +1,5 @@
+"""Inner CV hyperparameter search utilities."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,7 +11,6 @@ from sklearn.model_selection import ParameterGrid, StratifiedKFold
 
 from ..metrics.metrics_utils import MetricsConfig, MetricsConfigError, score_metrics
 from .xgboost_wrapper import predict_proba, train_xgb_classifier
-from .hpo_sobol import suggest_configs as sobol_suggest_configs
 
 
 @dataclass(frozen=True)
@@ -81,60 +82,21 @@ def select_best_params(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
-    optimizer: str = "grid",
-    budget: int | None = None,
-    param_space: dict[str, dict[str, Any]] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
 ) -> tuple[dict[str, Any], float]:
-    """
-    Select best hyperparameters via inner CV.
+    _validate_grid(param_grid)
 
-    optimizer:
-      - "grid": iterate ParameterGrid(param_grid)
-      - "sobol": sample candidates from param_space using Sobol (budget required)
-      - "smac": SMAC ask/tell optimization (budget + param_space required)
-    """
-    optimizer = optimizer.lower().strip()
-    greater_is_better = _metric_greater_is_better(metric_name)
-
-    if optimizer == "smac":
-        if budget is None:
-            raise MetricsConfigError("budget must be provided for optimizer='smac'")
-        if not param_space:
-            raise MetricsConfigError("param_space must be provided for optimizer='smac'")
-        from .hpo_smac import select_best_params_smac 
-
-        return select_best_params_smac(
-            X,
-            y,
-            param_space=param_space,
-            metric_name=metric_name,
-            inner_folds=inner_folds,
-            seed=seed,
-            budget=budget,
-            base_params=base_params,
-        )
-
-    if optimizer == "grid":
-        _validate_grid(param_grid)
-        candidates: list[dict[str, Any]] = list(ParameterGrid(param_grid))
-
-    elif optimizer == "sobol":
-        if budget is None:
-            raise MetricsConfigError("budget must be provided for optimizer='sobol'")
-        if not param_space:
-            raise MetricsConfigError("param_space must be provided for optimizer='sobol'")
-        candidates = sobol_suggest_configs(param_space, budget=budget, seed=seed)
-
-    else:
-        raise MetricsConfigError(f"Unknown optimizer: {optimizer}")
-
+    candidates = list(ParameterGrid(param_grid))
     best_score: float | None = None
     best_params: dict[str, Any] | None = None
+    greater_is_better = _metric_greater_is_better(metric_name)
 
     for candidate in candidates:
         merged = dict(base_params or {})
         merged.update(candidate)
-
         score = _evaluate_params(
             X,
             y,
@@ -175,9 +137,10 @@ def tune_and_train(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
-    optimizer: str = "grid",
-    budget: int | None = None,
-    param_space: dict[str, dict[str, Any]] | None = None,
+    resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
+    | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
 ) -> HPOResult:
     best_params, best_score = select_best_params(
         X,
@@ -187,9 +150,8 @@ def tune_and_train(
         inner_folds=inner_folds,
         seed=seed,
         base_params=base_params,
-        optimizer=optimizer,
-        budget=budget,
-        param_space=param_space,
+        resample_fn=resample_fn,
+        preprocess_fn=preprocess_fn,
     )
 
     if preprocess_fn is not None:
