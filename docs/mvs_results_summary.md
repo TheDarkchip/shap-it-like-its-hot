@@ -41,7 +41,7 @@ Data source: `results/mvs-hpo-20260202-031158-8bf30d5a/`
 
 - Rank-stability and agreement plots now show fold-level distributions; tables include mean plus median/IQR summaries.
 - Magnitude-variance plots show mean with bootstrap SD across folds (dispersion, not inferential CIs).
-- Stability and agreement are reported in both magnitude and directional variants; magnitude uses absolute importances, directional preserves sign.
+- Stability and agreement are reported in both magnitude and directional variants; magnitude uses absolute importances, directional preserves sign for correlation/cosine metrics while top-k overlap still uses magnitudes to track important-feature membership.
 - Within-method top-k stability is reported alongside rank-correlation stability.
 - These are baseline MVS results; optional stretches (e.g., metric sensitivity, signed SHAP) may alter conclusions.
 
