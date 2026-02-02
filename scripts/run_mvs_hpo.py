@@ -70,7 +70,7 @@ def main() -> None:
     results_path = results_dir / "results.csv"
 
     for outer in iter_outer_folds(
-        X,
+        X_raw,
         y,
         outer_folds=args.outer_folds,
         outer_repeats=args.outer_repeats,
