@@ -140,11 +140,10 @@ def run_single_experiment(
         y_train = y.iloc[train_idx]
         X_test_raw = X.iloc[test_idx]
         y_test = y.iloc[test_idx]
-        X_train, X_test = one_hot_encode_train_test(X_train_raw, X_test_raw)
 
         for ratio in ratios:
             resampled = resample_train_fold(
-                X_train,
+                X_train_raw,
                 y_train,
                 target_positive_ratio=float(ratio),
                 random_state=repeat_seed,
@@ -152,18 +151,21 @@ def run_single_experiment(
             achieved_ratio = resampled.positive_count / (
                 resampled.positive_count + resampled.negative_count
             )
+            X_train_enc, X_test_enc = one_hot_encode_train_test(
+                resampled.X, X_test_raw
+            )
             train_result = train_xgb_classifier(
-                resampled.X,
+                X_train_enc,
                 resampled.y,
                 params=model_params,
                 random_state=repeat_seed,
             )
-            proba = predict_proba(train_result.model, X_test)
+            proba = predict_proba(train_result.model, X_test_enc)
             metrics = _compute_metrics(y_test, proba)
-            shap_result = compute_tree_shap(train_result.model, X_test)
+            shap_result = compute_tree_shap(train_result.model, X_test_enc)
             pfi_result = compute_pfi_importance(
                 train_result.model,
-                X_test,
+                X_test_enc,
                 y_test,
                 metric_name=metrics_cfg.primary,
                 n_repeats=int(cfg["metrics"].get("pfi_repeats", 5)),

@@ -110,10 +110,7 @@ def main() -> None:
                     target_positive_ratio=ratio,
                     random_state=seed,
                 )
-                inner_X, _ = one_hot_encode_train_test(
-                    inner_resampled.X, inner_resampled.X
-                )
-                return inner_X, inner_resampled.y
+                return inner_resampled.X, inner_resampled.y
 
             best_params, best_score = select_best_params(
                 X_train_raw,
@@ -123,9 +120,11 @@ def main() -> None:
                 inner_folds=args.inner_folds,
                 seed=outer.seed,
                 resample_fn=_inner_resample,
+                preprocess_fn=one_hot_encode_train_test,
             )
+            X_train_enc, X_test_enc = one_hot_encode_train_test(resampled.X, X_test_raw)
             train_result = train_xgb_classifier(
-                resampled.X,
+                X_train_enc,
                 resampled.y,
                 params=best_params,
                 random_state=outer.seed,
@@ -136,11 +135,11 @@ def main() -> None:
                 model=train_result.model,
             )
             logger.info("Best HPO score=%.4f", hpo.best_score)
-            proba = predict_proba(hpo.model, X_test)
-            shap_result = compute_tree_shap(hpo.model, X_test)
+            proba = predict_proba(hpo.model, X_test_enc)
+            shap_result = compute_tree_shap(hpo.model, X_test_enc)
             pfi_result = compute_pfi_importance(
                 hpo.model,
-                X_test,
+                X_test_enc,
                 y_test,
                 metric_name="roc_auc",
                 n_repeats=args.pfi_repeats,

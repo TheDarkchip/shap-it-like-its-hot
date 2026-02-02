@@ -70,6 +70,8 @@ def run_inner_hpo_for_outer_folds(
     base_params: dict[str, Any] | None = None,
     resample_fn: Callable[[pd.DataFrame, pd.Series, int], tuple[pd.DataFrame, pd.Series]]
     | None = None,
+    preprocess_fn: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]]
+    | None = None,
 ) -> Iterator[OuterFoldResult]:
     """Run inner CV HPO for each outer fold and refit on the full train split."""
     for outer in iter_outer_folds(
@@ -90,6 +92,7 @@ def run_inner_hpo_for_outer_folds(
             seed=outer.seed,
             base_params=base_params,
             resample_fn=resample_fn,
+            preprocess_fn=preprocess_fn,
         )
 
         yield OuterFoldResult(
