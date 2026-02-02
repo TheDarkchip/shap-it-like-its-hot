@@ -1,0 +1,2 @@
+2026-02-02 01:51:59 INFO shap-it-like-its-hot run_id=mvs-20260202-005159-30e35bfd seed=42 Starting run: folds=5 repeats=3 ratios=[0.1, 0.3, 0.5] model=xgboost
+2026-02-02 01:52:19 INFO shap-it-like-its-hot run_id=mvs-20260202-005159-30e35bfd seed=42 Results written to artifacts/mvs-20260202-005159-30e35bfd/results.csv
