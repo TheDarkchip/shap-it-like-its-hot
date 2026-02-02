@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from html import parser
 from pathlib import Path
 
 import json
@@ -25,6 +26,15 @@ from shap_stability.metrics.stability import write_stability_summary  # noqa: E4
 from shap_stability.modeling.xgboost_wrapper import predict_proba, train_xgb_classifier  # noqa: E402
 from shap_stability.nested_cv import iter_outer_folds  # noqa: E402
 
+PARAM_SPACE = {
+    "n_estimators": {"type": "int", "low": 100, "high": 500},
+    "max_depth": {"type": "int", "low": 2, "high": 6},
+    "learning_rate": {"type": "float", "low": 0.01, "high": 0.2, "log": True},
+    "subsample": {"type": "float", "low": 0.7, "high": 1.0},
+    "colsample_bytree": {"type": "float", "low": 0.7, "high": 1.0},
+    "min_child_weight": {"type": "float", "low": 1.0, "high": 20.0, "log": True},
+    "reg_lambda": {"type": "float", "low": 1e-3, "high": 10.0, "log": True},
+}
 
 PARAM_GRID = {
     "n_estimators": [100, 200],
@@ -44,6 +54,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--outer-repeats", type=int, default=5)
     parser.add_argument("--inner-folds", type=int, default=3)
     parser.add_argument("--pfi-repeats", type=int, default=10)
+    parser.add_argument("--hpo-budget", type=int, default=64)
+    parser.add_argument("--optimizer", default="grid", choices=["grid", "sobol", "smac"])
     return parser.parse_args()
 
 
@@ -99,41 +111,19 @@ def main() -> None:
             achieved_ratio = resampled.positive_count / (
                 resampled.positive_count + resampled.negative_count
             )
-            def _inner_resample(
-                X_inner_raw: pd.DataFrame,
-                y_inner: pd.Series,
-                seed: int,
-            ) -> tuple[pd.DataFrame, pd.Series]:
-                inner_resampled = resample_train_fold(
-                    X_inner_raw,
-                    y_inner,
-                    target_positive_ratio=ratio,
-                    random_state=seed,
-                )
-                return inner_resampled.X, inner_resampled.y
-
-            best_params, best_score = select_best_params(
-                X_train_raw,
-                y_train,
+            use_space_opt = args.optimizer in ("sobol", "smac")
+            hpo = tune_and_train(
+                resampled.X,
+                resampled.y,
                 param_grid=PARAM_GRID,
                 metric_name="roc_auc",
                 inner_folds=args.inner_folds,
                 seed=outer.seed,
-                resample_fn=_inner_resample,
-                preprocess_fn=one_hot_encode_train_test,
+                optimizer=args.optimizer,
+                budget=args.hpo_budget if use_space_opt else None,
+                param_space=PARAM_SPACE if use_space_opt else None,
             )
-            X_train_enc, X_test_enc = one_hot_encode_train_test(resampled.X, X_test_raw)
-            train_result = train_xgb_classifier(
-                X_train_enc,
-                resampled.y,
-                params=best_params,
-                random_state=outer.seed,
-            )
-            hpo = HPOResult(
-                best_params=best_params,
-                best_score=best_score,
-                model=train_result.model,
-            )
+
             logger.info("Best HPO score=%.4f", hpo.best_score)
             proba = predict_proba(hpo.model, X_test_enc)
             shap_result = compute_tree_shap(hpo.model, X_test_enc)
@@ -187,6 +177,9 @@ def main() -> None:
             "pfi_repeats": args.pfi_repeats,
             "param_grid": PARAM_GRID,
             "agreement_top_k": AGREEMENT_TOP_K,
+            "optimizer": args.optimizer,
+            "hpo_budget": args.hpo_budget,
+            "param_space": PARAM_SPACE,
         },
     )
     (results_dir / "run_metadata.json").write_text(
