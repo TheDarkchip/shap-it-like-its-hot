@@ -88,3 +88,17 @@ def test_cosine_similarity_aligns_features() -> None:
     )
     summaries = summarize_agreement(frame, ratios=[0.1], top_k=1)
     assert summaries[0].mean_cosine == 1.0
+
+
+def test_agreement_uses_absolute_values() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [0.2, 0.2],
+            "shap_b": [0.1, 0.1],
+            "pfi_a": [-0.2, -0.2],
+            "pfi_b": [-0.1, -0.1],
+        }
+    )
+    summaries = summarize_agreement(frame, ratios=[0.1], top_k=1)
+    assert summaries[0].mean_topk_overlap == 1.0

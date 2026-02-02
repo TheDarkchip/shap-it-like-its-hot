@@ -77,13 +77,13 @@ def summarize_agreement(
         cosines: list[float] = []
 
         for col in shap_values.columns:
-            shap_vec = shap_values[col]
-            pfi_vec = pfi_values[col]
+            shap_vec = shap_values[col].abs()
+            pfi_vec = pfi_values[col].abs()
             corr = shap_vec.corr(pfi_vec, method="spearman")
             if corr is not None and not np.isnan(corr):
                 corrs.append(float(corr))
             overlaps.append(_topk_overlap(shap_vec, pfi_vec, top_k))
-            cosines.append(_cosine_similarity(shap_vec.abs(), pfi_vec.abs()))
+            cosines.append(_cosine_similarity(shap_vec, pfi_vec))
 
         summaries.append(
             AgreementSummary(
