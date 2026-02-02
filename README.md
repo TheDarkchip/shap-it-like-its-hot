@@ -41,7 +41,7 @@ uv run ruff format
 uv run python scripts/run_config.py configs/example.yaml
 
 # Run a single experiment (writes artifacts under ./artifacts/<run_id>/)
-uv run python single_run.py configs/example.yaml
+uv run python scripts/run_single.py configs/example.yaml
 
 # Run the MVS baseline with HPO (writes under ./results/<run_id>/)
 uv run python scripts/run_mvs_hpo.py

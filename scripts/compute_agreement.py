@@ -4,16 +4,8 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-import sys
 
 import pandas as pd
-
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
 
 from shap_stability.metrics.agreement import write_agreement_summary  # noqa: E402
 

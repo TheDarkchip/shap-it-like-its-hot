@@ -4,19 +4,11 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-import sys
 
 import json
 
 import pandas as pd
 from sklearn.metrics import accuracy_score, roc_auc_score
-
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
 
 from shap_stability.metrics.agreement import write_agreement_summary  # noqa: E402
 from shap_stability.experiment_utils import configure_logging  # noqa: E402

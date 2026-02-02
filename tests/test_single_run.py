@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from single_run import run_single_experiment
+from shap_stability.single_run import run_single_experiment
 
 
 def _config() -> dict:

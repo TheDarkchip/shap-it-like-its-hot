@@ -6,17 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 import json
-import sys
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
-
-ROOT = Path(__file__).resolve().parents[0]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
 
 from shap_stability.config_loader import load_config, validate_config
 from shap_stability.experiment_utils import (
