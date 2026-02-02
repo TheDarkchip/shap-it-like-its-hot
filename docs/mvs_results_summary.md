@@ -39,7 +39,8 @@ Data source: `results/mvs-hpo-20260202-031158-8bf30d5a/`
 
 ## Notes / limitations
 
-- Agreement and stability metrics are averaged across folds; variability within ratios is not shown here.
+- Rank-stability and agreement plots now show fold-level distributions; tables still report fold-averaged means.
+- Magnitude-variance plots show mean with bootstrap SD across folds (dispersion, not inferential CIs).
 - Agreement metrics compare absolute importances to align with mean(|SHAP|).
 - These are baseline MVS results; optional stretches (e.g., metric sensitivity, signed SHAP) may alter conclusions.
 
