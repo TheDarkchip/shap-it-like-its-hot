@@ -93,6 +93,18 @@ def test_render_summary_contains_core_sections(tmp_path: Path) -> None:
             },
         ]
     )
+    paired = pd.DataFrame(
+        [
+            {
+                "ratio_high": 0.3,
+                "ratio_low": 0.1,
+                "metric": "metric_roc_auc",
+                "median_diff": 0.02,
+                "iqr_diff": 0.01,
+                "n_pairs": 2,
+            }
+        ]
+    )
     metadata = {
         "run_id": "mvs-demo",
         "outer_folds": 5,
@@ -107,6 +119,7 @@ def test_render_summary_contains_core_sections(tmp_path: Path) -> None:
         results,
         stability_table=stability,
         agreement_table=agreement,
+        paired_table=paired,
         metadata=metadata,
         results_dir=tmp_path,
         ratios=[0.1, 0.3],
@@ -118,5 +131,7 @@ def test_render_summary_contains_core_sections(tmp_path: Path) -> None:
     assert "| 0.1 | 0.700 | 0.750 |" in summary
     assert "## Stability (within-method)" in summary
     assert "## Agreement (SHAP vs PFI)" in summary
+    assert "## Paired ratio differences (outer-fold paired)" in summary
+    assert "| 0.3 - 0.1 |" in summary
     assert "Directional variant preserves sign for correlation/cosine metrics" in summary
     assert "Agreement/stability top-k uses k=5" in summary
