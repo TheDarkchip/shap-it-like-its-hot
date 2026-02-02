@@ -479,11 +479,21 @@ def generate_report(results_dir: Path) -> None:
     )
     agreement_table.to_csv(results_dir / "agreement_table.csv", index=False)
 
+    metric_cols = [col for col in results.columns if col.startswith("metric_")]
+    key_cols = [col for col in ("fold_id", "repeat_id", "seed", "model_name") if col in results.columns]
+    paired_diffs = _paired_ratio_diffs(
+        results, ratios=ratios, metrics=metric_cols, key_cols=key_cols
+    )
+    paired_diffs.to_csv(results_dir / "paired_ratio_diffs.csv", index=False)
+    paired_summary = _summarize_paired_diffs(paired_diffs)
+    paired_summary.to_csv(results_dir / "paired_ratio_table.csv", index=False)
+
     summary_path = results_dir / "mvs_results_summary.md"
     summary_text = _render_summary(
         results,
         stability_table=stability_table,
         agreement_table=agreement_table,
+        paired_table=paired_summary,
         metadata=metadata,
         results_dir=results_dir,
         ratios=ratios,
@@ -506,11 +516,86 @@ def _format_ratio_values(
     return ", ".join(values)
 
 
+def _paired_ratio_diffs(
+    results: pd.DataFrame,
+    *,
+    ratios: list[float],
+    metrics: list[str],
+    key_cols: list[str],
+) -> pd.DataFrame:
+    diffs: list[dict[str, float | str]] = []
+    if not metrics or not key_cols:
+        return pd.DataFrame(columns=["ratio_high", "ratio_low", "metric", "diff"])
+    for i, ratio_low in enumerate(ratios):
+        for ratio_high in ratios[i + 1 :]:
+            left = results[results["class_ratio"] == ratio_high][key_cols + metrics]
+            right = results[results["class_ratio"] == ratio_low][key_cols + metrics]
+            merged = left.merge(right, on=key_cols, suffixes=("_high", "_low"))
+            for metric in metrics:
+                diff_series = merged[f"{metric}_high"] - merged[f"{metric}_low"]
+                for value in diff_series.dropna().to_list():
+                    diffs.append(
+                        {
+                            "ratio_high": float(ratio_high),
+                            "ratio_low": float(ratio_low),
+                            "metric": metric,
+                            "diff": float(value),
+                        }
+                    )
+    return pd.DataFrame(diffs)
+
+
+def _summarize_paired_diffs(paired: pd.DataFrame) -> pd.DataFrame:
+    if paired.empty:
+        return pd.DataFrame(
+            columns=["ratio_high", "ratio_low", "metric", "median_diff", "iqr_diff", "n_pairs"]
+        )
+    summary = (
+        paired.groupby(["ratio_high", "ratio_low", "metric"])["diff"]
+        .agg(
+            median_diff="median",
+            iqr_diff=lambda s: s.quantile(0.75) - s.quantile(0.25),
+            n_pairs="count",
+        )
+        .reset_index()
+    )
+    return summary
+
+
+def _format_paired_table(
+    paired: pd.DataFrame,
+    *,
+    ratios: list[float],
+) -> str:
+    if paired.empty:
+        return ""
+    pairs = [(ratios[j], ratios[i]) for i in range(len(ratios)) for j in range(i + 1, len(ratios))]
+    headers = ["Metric"] + [f"{high:g} - {low:g}" for high, low in pairs]
+    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+    for metric in sorted(paired["metric"].unique()):
+        row = [metric.removeprefix("metric_")]
+        for high, low in pairs:
+            subset = paired[
+                (paired["ratio_high"] == float(high))
+                & (paired["ratio_low"] == float(low))
+                & (paired["metric"] == metric)
+            ]
+            if subset.empty:
+                row.append("—")
+                continue
+            median = float(subset["median_diff"].iloc[0])
+            iqr = float(subset["iqr_diff"].iloc[0])
+            row.append(f"{median:.3f} ({iqr:.3f})")
+        lines.append("| " + " | ".join(row) + " |")
+    return "\n".join(lines)
+
+
 def _render_summary(
     results: pd.DataFrame,
     *,
     stability_table: pd.DataFrame,
     agreement_table: pd.DataFrame,
+    paired_table: pd.DataFrame,
     metadata: dict,
     results_dir: Path,
     ratios: list[float],
@@ -593,6 +678,20 @@ def _render_summary(
             )
         )
 
+    paired_section = ""
+    paired_table_md = _format_paired_table(paired_table, ratios=ratios)
+    if paired_table_md:
+        paired_section = "\n".join(
+            [
+                "## Paired ratio differences (outer-fold paired)",
+                "",
+                "Median difference with IQR in parentheses; positive values mean higher metric at higher ratio.",
+                "",
+                paired_table_md,
+                "",
+            ]
+        )
+
     notes = "\n".join(
         [
             "## Notes / limitations",
@@ -632,6 +731,7 @@ def _render_summary(
             "",
             "\n\n".join(agreement_sections),
             "",
+            paired_section,
             notes,
             "",
             "## Files generated",
