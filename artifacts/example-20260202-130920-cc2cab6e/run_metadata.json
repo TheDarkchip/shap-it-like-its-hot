@@ -1,9 +1,0 @@
-{
-  "run_id": "example-20260202-130920-cc2cab6e",
-  "seed": 123,
-  "started_at": "2026-02-02T13:09:24.039774+00:00",
-  "python_version": "3.13.11",
-  "platform": "macOS-26.2-x86_64-i386-64bit-Mach-O",
-  "cwd": "/Users/shilinjosline/Documents/GitHub/shap-it-like-its-hot/Untitled",
-  "experiment": "example"
-}

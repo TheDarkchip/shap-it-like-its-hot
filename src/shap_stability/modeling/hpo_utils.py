@@ -11,6 +11,7 @@ from sklearn.model_selection import ParameterGrid, StratifiedKFold
 
 from ..metrics.metrics_utils import MetricsConfig, MetricsConfigError, score_metrics
 from .xgboost_wrapper import predict_proba, train_xgb_classifier
+from .hpo_sobol import suggest_configs as sobol_suggest_configs
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,36 @@ def _evaluate_params(
 
     return float(np.nanmean(scores))
 
+def _generate_candidates(
+    *,
+    param_grid: dict[str, Iterable[Any]],
+    optimizer: str,
+    budget: int | None,
+    seed: int,
+    param_space: dict[str, dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    optimizer = optimizer.lower()
+
+    if optimizer == "grid":
+        _validate_grid(param_grid)
+        candidates = _generate_candidates(
+            param_grid=param_grid,
+            optimizer=optimizer,
+            budget=budget,
+            seed=seed,
+            param_space=param_space,
+        )
+        return candidates
+
+    if optimizer == "sobol":
+        if budget is None:
+            raise MetricsConfigError("budget must be provided for optimizer='sobol'")
+        if not param_space:
+            raise MetricsConfigError("param_space must be provided for optimizer='sobol'")
+        return sobol_suggest_configs(param_space, budget=budget, seed=seed)
+
+    raise MetricsConfigError(f"Unknown optimizer: {optimizer}")
+
 
 def select_best_params(
     X: pd.DataFrame,
@@ -74,7 +105,26 @@ def select_best_params(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
+    optimizer: str = "grid",
+    budget: int | None = None,
+    param_space: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], float]:
+    if optimizer == "smac":
+        if budget is None:
+            raise MetricsConfigError("budget must be provided for optimizer='smac'")
+        if not param_space:
+            raise MetricsConfigError("param_space must be provided for optimizer='smac'")
+        from .hpo_smac import select_best_params_smac
+        return select_best_params_smac(
+            X,
+            y,
+            param_space=param_space,
+            metric_name=metric_name,
+            inner_folds=inner_folds,
+            seed=seed,
+            budget=budget,
+            base_params=base_params,
+        )
     _validate_grid(param_grid)
 
     candidates = list(ParameterGrid(param_grid))
@@ -123,15 +173,21 @@ def tune_and_train(
     inner_folds: int,
     seed: int,
     base_params: dict[str, Any] | None = None,
+    optimizer: str = "grid",
+    budget: int | None = None,
+    param_space: dict[str, dict[str, Any]] | None = None,
 ) -> HPOResult:
     best_params, best_score = select_best_params(
-        X,
-        y,
-        param_grid=param_grid,
-        metric_name=metric_name,
-        inner_folds=inner_folds,
-        seed=seed,
-        base_params=base_params,
+    X,
+    y,
+    param_grid=param_grid,
+    metric_name=metric_name,
+    inner_folds=inner_folds,
+    seed=seed,
+    base_params=base_params,
+    optimizer=optimizer,
+    budget=budget,
+    param_space=param_space,
     )
 
     model_result = train_xgb_classifier(
