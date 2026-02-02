@@ -64,7 +64,7 @@ def _plot_metric_with_error(
         ax.set_ylim(*y_limits)
     ax.grid(True, alpha=0.3)
     if use_scientific:
-        ax.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
+        ax.ticklabel_format(axis="y", style="plain")
     if note:
         fig.text(0.5, 0.01, note, ha="center", va="bottom", fontsize=9)
         fig.tight_layout(rect=[0, 0.04, 1, 1])
@@ -248,7 +248,7 @@ def generate_report(results_dir: Path) -> None:
     plots_dir.mkdir(parents=True, exist_ok=True)
 
     ratios = sorted(results["class_ratio"].unique())
-    ratio_label = "Target positive class ratio (train resampling)"
+    ratio_label = "Target positive class ratio (train resampling, fraction)"
     fold_note = "Box=IQR, line=median, dot=mean"
     ratio_ticks = [float(ratio) for ratio in ratios]
 
