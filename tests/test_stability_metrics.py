@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from stability_metrics import summarize_stability, write_stability_summary
 
@@ -62,5 +63,6 @@ def test_dispersion_nan_for_zero_importance() -> None:
             "shap_b": [0.0, 0.0],
         }
     )
-    summaries = summarize_stability(frame, ratios=[0.1], method="shap")
+    with pytest.warns((RuntimeWarning, UserWarning)):
+        summaries = summarize_stability(frame, ratios=[0.1], method="shap")
     assert np.isnan(summaries[0].mean_dispersion)
