@@ -49,8 +49,11 @@ def _topk_overlap(a: pd.Series, b: pd.Series, k: int) -> float:
 
 
 def _cosine_similarity(a: pd.Series, b: pd.Series) -> float:
-    a_vec = a.to_numpy(dtype=float)
-    b_vec = b.to_numpy(dtype=float)
+    common = a.index.intersection(b.index)
+    if common.empty:
+        return float("nan")
+    a_vec = a.loc[common].to_numpy(dtype=float)
+    b_vec = b.loc[common].to_numpy(dtype=float)
     denom = np.linalg.norm(a_vec) * np.linalg.norm(b_vec)
     if denom == 0:
         return float("nan")

@@ -74,3 +74,17 @@ def test_topk_overlap_ignores_missing_values() -> None:
     with pytest.warns(RuntimeWarning):
         summaries = summarize_agreement(frame, ratios=[0.1], top_k=5)
     assert summaries[0].mean_topk_overlap == 1.0
+
+
+def test_cosine_similarity_aligns_features() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1],
+            "shap_b": [0.0],
+            "shap_a": [1.0],
+            "pfi_a": [1.0],
+            "pfi_b": [0.0],
+        }
+    )
+    summaries = summarize_agreement(frame, ratios=[0.1], top_k=1)
+    assert summaries[0].mean_cosine == 1.0
