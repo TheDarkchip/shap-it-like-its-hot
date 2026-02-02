@@ -154,8 +154,13 @@ def tune_and_train(
         preprocess_fn=preprocess_fn,
     )
 
+    if preprocess_fn is not None:
+        X_train, _ = preprocess_fn(X, X)
+    else:
+        X_train = X
+
     model_result = train_xgb_classifier(
-        X,
+        X_train,
         y,
         params=best_params,
         random_state=seed,
