@@ -73,7 +73,7 @@ def _collect_importances(
     matrices: list[pd.Series] = []
     for idx, row in subset.iterrows():
         series = row[cols]
-        series.index = [c.replace(prefix, "") for c in cols]
+        series.index = [c.removeprefix(prefix) for c in cols]
         matrices.append(series.astype(float))
     return pd.concat(matrices, axis=1)
 

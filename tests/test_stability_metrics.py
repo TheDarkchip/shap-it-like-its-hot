@@ -15,6 +15,7 @@ def _toy_results() -> pd.DataFrame:
             "class_ratio": [0.1, 0.1, 0.1],
             "shap_a": [0.5, 0.4, 0.6],
             "shap_b": [0.2, 0.3, 0.1],
+            "shap_pfi_score": [0.1, 0.2, 0.3],
             "pfi_a": [0.05, 0.04, 0.06],
             "pfi_b": [0.02, 0.03, 0.01],
         }
@@ -91,3 +92,15 @@ def test_magnitude_variance_uses_normalized_values() -> None:
     )
     summaries = summarize_stability(frame, ratios=[0.1], method="shap")
     assert summaries[0].mean_magnitude_var == 0.0
+
+
+def test_prefix_removal_only_strips_leading() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1],
+            "shap_pfi_score": [0.2],
+            "shap_other": [0.1],
+        }
+    )
+    summaries = summarize_stability(frame, ratios=[0.1], method="shap")
+    assert summaries[0].n_folds == 1
