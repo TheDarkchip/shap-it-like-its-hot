@@ -35,8 +35,21 @@ def _pairwise_corr(ranks: pd.DataFrame) -> list[float]:
     return corrs
 
 
+def _normalize_columns(values: pd.DataFrame) -> pd.DataFrame:
+    sums = values.sum(axis=0)
+    normalized = values.copy()
+    for col in values.columns:
+        total = sums[col]
+        if total == 0:
+            normalized[col] = np.nan
+        else:
+            normalized[col] = values[col] / total
+    return normalized
+
+
 def _magnitude_variance(values: pd.DataFrame) -> float:
-    return float(values.var(axis=1, ddof=1).mean())
+    normalized = _normalize_columns(values)
+    return float(normalized.var(axis=1, ddof=1).mean())
 
 
 def _dispersion(values: pd.Series) -> float:
@@ -81,8 +94,9 @@ def summarize_stability(
         ranks = values.apply(_rank_vector, axis=0)
         corrs = _pairwise_corr(ranks)
         mean_corr = float(np.mean(corrs)) if corrs else float("nan")
-        magnitude_var = _magnitude_variance(values)
-        dispersion_values = values.abs() if method == "pfi" else values
+        magnitude_values = values.abs() if method == "pfi" else values
+        magnitude_var = _magnitude_variance(magnitude_values)
+        dispersion_values = magnitude_values
         dispersions = [_dispersion(dispersion_values[col]) for col in values.columns]
         mean_dispersion = float(np.nanmean(dispersions))
 

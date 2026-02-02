@@ -79,3 +79,15 @@ def test_pfi_dispersion_uses_absolute_values() -> None:
     )
     summaries = summarize_stability(frame, ratios=[0.1], method="pfi")
     assert np.isfinite(summaries[0].mean_dispersion)
+
+
+def test_magnitude_variance_uses_normalized_values() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [1.0, 2.0],
+            "shap_b": [2.0, 4.0],
+        }
+    )
+    summaries = summarize_stability(frame, ratios=[0.1], method="shap")
+    assert summaries[0].mean_magnitude_var == 0.0
