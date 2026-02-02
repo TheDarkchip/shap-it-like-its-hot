@@ -1,5 +1,3 @@
-"""Inner CV hyperparameter search utilities."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -65,36 +63,6 @@ def _evaluate_params(
 
     return float(np.nanmean(scores))
 
-def _generate_candidates(
-    *,
-    param_grid: dict[str, Iterable[Any]],
-    optimizer: str,
-    budget: int | None,
-    seed: int,
-    param_space: dict[str, dict[str, Any]] | None,
-) -> list[dict[str, Any]]:
-    optimizer = optimizer.lower()
-
-    if optimizer == "grid":
-        _validate_grid(param_grid)
-        candidates = _generate_candidates(
-            param_grid=param_grid,
-            optimizer=optimizer,
-            budget=budget,
-            seed=seed,
-            param_space=param_space,
-        )
-        return candidates
-
-    if optimizer == "sobol":
-        if budget is None:
-            raise MetricsConfigError("budget must be provided for optimizer='sobol'")
-        if not param_space:
-            raise MetricsConfigError("param_space must be provided for optimizer='sobol'")
-        return sobol_suggest_configs(param_space, budget=budget, seed=seed)
-
-    raise MetricsConfigError(f"Unknown optimizer: {optimizer}")
-
 
 def select_best_params(
     X: pd.DataFrame,
@@ -109,12 +77,24 @@ def select_best_params(
     budget: int | None = None,
     param_space: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], float]:
+    """
+    Select best hyperparameters via inner CV.
+
+    optimizer:
+      - "grid": iterate ParameterGrid(param_grid)
+      - "sobol": sample candidates from param_space using Sobol (budget required)
+      - "smac": SMAC ask/tell optimization (budget + param_space required)
+    """
+    optimizer = optimizer.lower().strip()
+    greater_is_better = _metric_greater_is_better(metric_name)
+
     if optimizer == "smac":
         if budget is None:
             raise MetricsConfigError("budget must be provided for optimizer='smac'")
         if not param_space:
             raise MetricsConfigError("param_space must be provided for optimizer='smac'")
-        from .hpo_smac import select_best_params_smac
+        from .hpo_smac import select_best_params_smac 
+
         return select_best_params_smac(
             X,
             y,
@@ -125,16 +105,28 @@ def select_best_params(
             budget=budget,
             base_params=base_params,
         )
-    _validate_grid(param_grid)
 
-    candidates = list(ParameterGrid(param_grid))
+    if optimizer == "grid":
+        _validate_grid(param_grid)
+        candidates: list[dict[str, Any]] = list(ParameterGrid(param_grid))
+
+    elif optimizer == "sobol":
+        if budget is None:
+            raise MetricsConfigError("budget must be provided for optimizer='sobol'")
+        if not param_space:
+            raise MetricsConfigError("param_space must be provided for optimizer='sobol'")
+        candidates = sobol_suggest_configs(param_space, budget=budget, seed=seed)
+
+    else:
+        raise MetricsConfigError(f"Unknown optimizer: {optimizer}")
+
     best_score: float | None = None
     best_params: dict[str, Any] | None = None
-    greater_is_better = _metric_greater_is_better(metric_name)
 
     for candidate in candidates:
         merged = dict(base_params or {})
         merged.update(candidate)
+
         score = _evaluate_params(
             X,
             y,
@@ -178,16 +170,16 @@ def tune_and_train(
     param_space: dict[str, dict[str, Any]] | None = None,
 ) -> HPOResult:
     best_params, best_score = select_best_params(
-    X,
-    y,
-    param_grid=param_grid,
-    metric_name=metric_name,
-    inner_folds=inner_folds,
-    seed=seed,
-    base_params=base_params,
-    optimizer=optimizer,
-    budget=budget,
-    param_space=param_space,
+        X,
+        y,
+        param_grid=param_grid,
+        metric_name=metric_name,
+        inner_folds=inner_folds,
+        seed=seed,
+        base_params=base_params,
+        optimizer=optimizer,
+        budget=budget,
+        param_space=param_space,
     )
 
     model_result = train_xgb_classifier(
