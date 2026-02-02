@@ -1,0 +1,34 @@
+{
+  "run_id": "mvs-hpo-20260202-025841-dba50167",
+  "seed": 42,
+  "started_at": "2026-02-02T03:01:39.532068+00:00",
+  "python_version": "3.13.7",
+  "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+  "cwd": "/Users/robin/Uni/iml/shap-it-like-its-hot",
+  "outer_folds": 5,
+  "outer_repeats": 5,
+  "inner_folds": 3,
+  "pfi_repeats": 10,
+  "param_grid": {
+    "n_estimators": [
+      100,
+      200
+    ],
+    "max_depth": [
+      3,
+      4
+    ],
+    "learning_rate": [
+      0.05,
+      0.1
+    ],
+    "subsample": [
+      0.8,
+      1.0
+    ],
+    "colsample_bytree": [
+      0.8,
+      1.0
+    ]
+  }
+}
