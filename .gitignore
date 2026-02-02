@@ -36,7 +36,6 @@ htmlcov/
 /data/
 /datasets/
 /outputs/
-/results/
 /logs/
 /models/
 
@@ -52,3 +51,6 @@ htmlcov/
 # Misc
 *.log
 *.tmp
+
+# Keep run logs under results
+!results/**/run.log
