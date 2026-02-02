@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import log_loss
 
-from metrics_utils import SUPPORTED_METRICS, MetricsConfigError
+from ..metrics.metrics_utils import SUPPORTED_METRICS, MetricsConfigError
 
 
 def _predict_scores(estimator: object, X: pd.DataFrame) -> np.ndarray:

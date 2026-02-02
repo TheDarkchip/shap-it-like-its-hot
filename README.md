@@ -9,8 +9,8 @@ The project empirically evaluates global SHAP feature importances under controll
 
 Experiments are based on cross-validated evaluations using the German Credit dataset.
 
-**Status:** Work in progress.  
-At the time of writing, no finalized experiments or results are included. Code and documentation will be added as the project is implemented.
+**Status:** Baseline MVS complete.  
+The core MVS baseline runs, metrics, and plots are available under `results/` and summarized in `docs/mvs_results_summary.md`.
 
 ## Setup
 
@@ -37,12 +37,24 @@ uv run pytest
 uv run ruff check
 uv run ruff format
 
-# Run a single experiment (writes artifacts under ./artifacts/<run_id>/)
-uv run python scripts/run_single.py configs/example.yaml
+# Validate a config
+uv run python scripts/run_config.py configs/example.yaml
 
-# Override the output directory (still creates a run_id subfolder)
-uv run python scripts/run_single.py configs/example.yaml --output-dir artifacts
+# Run a single experiment (writes artifacts under ./artifacts/<run_id>/)
+uv run python single_run.py configs/example.yaml
+
+# Run the MVS baseline with HPO (writes under ./results/<run_id>/)
+uv run python scripts/run_mvs_hpo.py
+
+# Regenerate MVS tables/plots for a given run
+uv run python scripts/generate_mvs_report.py results/<run_id>
 ```
+
+### Layout
+
+- Reusable code lives under `src/shap_stability/`.
+- CLI scripts live under `scripts/`.
+- Tests live under `tests/`.
 
 ### Data cache
 
@@ -55,6 +67,11 @@ Single-run experiments create a run folder with:
 - `results.csv` (metrics + SHAP + PFI importances)
 - `run_metadata.json` (seed, environment, run_id)
 - `run.log` (structured logs with run id/seed)
+
+MVS runs additionally generate:
+- `stability_summary.csv`, `agreement_summary.csv`
+- `stability_table.csv`, `agreement_table.csv`
+- plots under `results/<run_id>/plots/`
 
 ### Protocol
 

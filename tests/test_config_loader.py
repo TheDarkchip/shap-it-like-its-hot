@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from config_loader import ConfigError, load_config, validate_config
+from shap_stability.config_loader import ConfigError, load_config, validate_config
 
 
 def test_load_config_missing(tmp_path: Path) -> None:

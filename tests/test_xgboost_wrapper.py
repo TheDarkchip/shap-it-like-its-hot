@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from xgboost_wrapper import predict_proba, train_xgb_classifier
+from shap_stability.modeling.xgboost_wrapper import predict_proba, train_xgb_classifier
 
 
 def _toy_data(n: int = 50) -> tuple[pd.DataFrame, pd.Series]:

@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from german_credit import (
+from shap_stability.data import (
     GERMAN_CREDIT_COLUMNS,
     download_german_credit,
     iter_german_credit_columns,

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from agreement_metrics import summarize_agreement, write_agreement_summary
+from shap_stability.metrics.agreement import summarize_agreement, write_agreement_summary
 
 
 def _toy_frame() -> pd.DataFrame:

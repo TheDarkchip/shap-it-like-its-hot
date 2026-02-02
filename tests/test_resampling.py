@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from resampling import ResampleResult, resample_train_fold
+from shap_stability.resampling import ResampleResult, resample_train_fold
 
 
 def _toy_data(n_pos: int, n_neg: int) -> tuple[pd.DataFrame, pd.Series]:

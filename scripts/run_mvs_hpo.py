@@ -12,23 +12,26 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, roc_auc_score
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
-from agreement_metrics import write_agreement_summary  # noqa: E402
-from experiment_utils import configure_logging  # noqa: E402
-from experiment_utils import create_run_metadata  # noqa: E402
-from experiment_utils import generate_run_id  # noqa: E402
-from experiment_utils import set_global_seed  # noqa: E402
-from german_credit import load_german_credit  # noqa: E402
-from hpo_utils import tune_and_train  # noqa: E402
-from pfi_utils import compute_pfi_importance  # noqa: E402
-from resampling import resample_train_fold  # noqa: E402
-from results_io import ResultRecord, append_record_csv  # noqa: E402
-from shap_utils import compute_tree_shap  # noqa: E402
-from stability_metrics import write_stability_summary  # noqa: E402
-from xgboost_wrapper import predict_proba  # noqa: E402
-from nested_cv import iter_outer_folds  # noqa: E402
+from shap_stability.metrics.agreement import write_agreement_summary  # noqa: E402
+from shap_stability.experiment_utils import configure_logging  # noqa: E402
+from shap_stability.experiment_utils import create_run_metadata  # noqa: E402
+from shap_stability.experiment_utils import generate_run_id  # noqa: E402
+from shap_stability.experiment_utils import set_global_seed  # noqa: E402
+from shap_stability.data import load_german_credit  # noqa: E402
+from shap_stability.modeling.hpo_utils import tune_and_train  # noqa: E402
+from shap_stability.explain.pfi_utils import compute_pfi_importance  # noqa: E402
+from shap_stability.resampling import resample_train_fold  # noqa: E402
+from shap_stability.metrics.results_io import ResultRecord, append_record_csv  # noqa: E402
+from shap_stability.explain.shap_utils import compute_tree_shap  # noqa: E402
+from shap_stability.metrics.stability import write_stability_summary  # noqa: E402
+from shap_stability.modeling.xgboost_wrapper import predict_proba  # noqa: E402
+from shap_stability.nested_cv import iter_outer_folds  # noqa: E402
 
 
 PARAM_GRID = {

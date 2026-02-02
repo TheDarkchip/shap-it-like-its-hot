@@ -6,7 +6,7 @@ import pytest
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 
-from pfi_utils import compute_pfi_importance
+from shap_stability.explain.pfi_utils import compute_pfi_importance
 
 
 def _toy_data() -> tuple[pd.DataFrame, pd.Series]:

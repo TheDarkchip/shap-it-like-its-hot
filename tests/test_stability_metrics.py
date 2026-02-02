@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from stability_metrics import summarize_stability, write_stability_summary
+from shap_stability.metrics.stability import summarize_stability, write_stability_summary
 
 
 def _toy_results() -> pd.DataFrame:

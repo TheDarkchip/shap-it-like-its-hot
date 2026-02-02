@@ -7,8 +7,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from nested_cv import iter_outer_folds
-from resampling import resample_train_fold
+from .nested_cv import iter_outer_folds
+from .resampling import resample_train_fold
 
 
 @dataclass(frozen=True)

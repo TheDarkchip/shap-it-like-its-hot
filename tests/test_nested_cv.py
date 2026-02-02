@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from nested_cv import iter_outer_folds
+from shap_stability.nested_cv import iter_outer_folds
 
 
 def test_iter_outer_folds_counts_and_shapes() -> None:

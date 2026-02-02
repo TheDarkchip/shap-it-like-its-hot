@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import ParameterGrid, StratifiedKFold
 
-from metrics_utils import MetricsConfig, MetricsConfigError, score_metrics
-from xgboost_wrapper import predict_proba, train_xgb_classifier
+from ..metrics.metrics_utils import MetricsConfig, MetricsConfigError, score_metrics
+from .xgboost_wrapper import predict_proba, train_xgb_classifier
 
 
 @dataclass(frozen=True)

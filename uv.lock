@@ -561,11 +561,10 @@ wheels = [
 [[package]]
 name = "shap-it-like-its-hot"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "pandas" },
-    { name = "pytest" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
     { name = "shap" },
@@ -575,6 +574,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pytest" },
     { name = "ruff" },
 ]
 
@@ -582,7 +582,6 @@ dev = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "pandas", specifier = ">=3.0.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "shap", specifier = ">=0.50.0" },
@@ -592,6 +591,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.14.13" },
 ]
 

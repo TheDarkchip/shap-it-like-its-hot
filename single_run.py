@@ -6,26 +6,32 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 import json
+import sys
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
-from config_loader import load_config, validate_config
-from experiment_utils import (
+ROOT = Path(__file__).resolve().parents[0]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from shap_stability.config_loader import load_config, validate_config
+from shap_stability.experiment_utils import (
     configure_logging,
     create_run_metadata,
     generate_run_id,
     set_global_seed,
 )
-from german_credit import load_german_credit
-from metrics_utils import parse_metrics_config
-from pfi_utils import compute_pfi_importance
-from resampling import resample_train_fold
-from results_io import ResultRecord, append_record_csv
-from shap_utils import compute_tree_shap
-from xgboost_wrapper import predict_proba, train_xgb_classifier
+from shap_stability.data import load_german_credit
+from shap_stability.metrics.metrics_utils import parse_metrics_config
+from shap_stability.explain.pfi_utils import compute_pfi_importance
+from shap_stability.resampling import resample_train_fold
+from shap_stability.metrics.results_io import ResultRecord, append_record_csv
+from shap_stability.explain.shap_utils import compute_tree_shap
+from shap_stability.modeling.xgboost_wrapper import predict_proba, train_xgb_classifier
 
 
 @dataclass(frozen=True)

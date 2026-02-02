@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-from hpo_utils import HPOResult, tune_and_train
+from .modeling.hpo_utils import HPOResult, tune_and_train
 
 
 @dataclass(frozen=True)

@@ -3,7 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from metrics_utils import MetricsConfigError, parse_metrics_config, score_metrics
+from shap_stability.metrics.metrics_utils import (
+    MetricsConfigError,
+    parse_metrics_config,
+    score_metrics,
+)
 
 
 def test_parse_metrics_config_accepts_supported() -> None:

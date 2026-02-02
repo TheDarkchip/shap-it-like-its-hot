@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from metrics_utils import parse_metrics_config, score_metrics
-from protocol_checks import (
+from shap_stability.metrics.metrics_utils import parse_metrics_config, score_metrics
+from shap_stability.protocol_checks import (
     check_metric_sanity,
     check_no_leakage,
     check_resampling_determinism,

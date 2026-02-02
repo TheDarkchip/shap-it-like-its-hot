@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 
-from shap_utils import compute_tree_shap
+from shap_stability.explain.shap_utils import compute_tree_shap
 
 
 def _toy_data(n: int = 40) -> tuple[pd.DataFrame, pd.Series]:

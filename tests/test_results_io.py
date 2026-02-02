@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from results_io import (
+from shap_stability.metrics.results_io import (
     ResultRecord,
     append_record_csv,
     record_to_frame,

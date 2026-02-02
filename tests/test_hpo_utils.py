@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hpo_utils import select_best_params, tune_and_train
-from nested_cv import run_inner_hpo_for_outer_folds
+from shap_stability.modeling.hpo_utils import select_best_params, tune_and_train
+from shap_stability.nested_cv import run_inner_hpo_for_outer_folds
 
 
 def _toy_data(n: int = 60) -> tuple[pd.DataFrame, pd.Series]:

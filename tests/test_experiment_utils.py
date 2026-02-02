@@ -6,7 +6,7 @@ import random
 
 import numpy as np
 
-from experiment_utils import (
+from shap_stability.experiment_utils import (
     configure_logging,
     create_run_metadata,
     generate_run_id,
