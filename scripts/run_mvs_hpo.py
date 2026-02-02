@@ -27,11 +27,13 @@ from shap_stability.modeling.xgboost_wrapper import predict_proba  # noqa: E402
 from shap_stability.nested_cv import iter_outer_folds  # noqa: E402
 
 PARAM_SPACE = {
-    "n_estimators": {"type": "int", "low": 100, "high": 800},
-    "max_depth": {"type": "int", "low": 2, "high": 8},
-    "learning_rate": {"type": "float", "low": 1e-3, "high": 0.3, "log": True},
-    "subsample": {"type": "float", "low": 0.5, "high": 1.0},
-    "colsample_bytree": {"type": "float", "low": 0.5, "high": 1.0},
+    "n_estimators": {"type": "int", "low": 100, "high": 500},
+    "max_depth": {"type": "int", "low": 2, "high": 6},
+    "learning_rate": {"type": "float", "low": 0.01, "high": 0.2, "log": True},
+    "subsample": {"type": "float", "low": 0.7, "high": 1.0},
+    "colsample_bytree": {"type": "float", "low": 0.7, "high": 1.0},
+    "min_child_weight": {"type": "float", "low": 1.0, "high": 20.0, "log": True},
+    "reg_lambda": {"type": "float", "low": 1e-3, "high": 10.0, "log": True},
 }
 
 PARAM_GRID = {
