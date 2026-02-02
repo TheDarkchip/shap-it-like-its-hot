@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from stability_metrics import summarize_stability
+from stability_metrics import summarize_stability, write_stability_summary
 
 
 def _toy_results() -> pd.DataFrame:
@@ -39,3 +41,26 @@ def test_summarize_stability_requires_method() -> None:
         assert "method" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid method")
+
+
+def test_write_stability_summary_writes_csv(tmp_path: Path) -> None:
+    frame = _toy_results()
+    out_path = tmp_path / "summary.csv"
+
+    out_frame = write_stability_summary(frame, ratios=[0.1], output_path=out_path)
+
+    assert out_path.exists()
+    assert set(out_frame["method"]) == {"shap", "pfi"}
+    assert len(out_frame) == 2
+
+
+def test_dispersion_nan_for_zero_importance() -> None:
+    frame = pd.DataFrame(
+        {
+            "class_ratio": [0.1, 0.1],
+            "shap_a": [0.0, 0.0],
+            "shap_b": [0.0, 0.0],
+        }
+    )
+    summaries = summarize_stability(frame, ratios=[0.1], method="shap")
+    assert np.isnan(summaries[0].mean_dispersion)
